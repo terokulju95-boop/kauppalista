@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang='fi'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1'>
+<title>Kauppalistat</title>
+<style>
+*{box-sizing:border-box;}
+body{
+  margin:0;font-family:sans-serif;color:#f4f4f4;
+  background:radial-gradient(circle at top left,#1a1a1d 0%,#0b0b0d 40%,#050506 100%);
+  position:relative;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:linear-gradient(130deg,rgba(255,140,40,0.08),rgba(0,0,0,0),rgba(80,140,255,0.08));
+  animation:amb 12s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+@keyframes amb{from{transform:translate(-4%,-3%);}to{transform:translate(4%,3%);}}
+body::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAABlBMVEX///8AAABVwtN+AAAAAXRSTlMAQObYZgAAAApJREFUeJxjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=') repeat;
+  opacity:0.07;pointer-events:none;
+}
+.container{width:100%;max-width:380px;margin:0 auto;padding:16px;}
+h1{color:#ff9830;margin-bottom:22px;font-size:32px;text-shadow:0 0 8px rgba(255,140,30,0.35);}
+input{
+  background:#1b1b20;border:1px solid #333;border-radius:12px;
+  padding:12px;width:100%;color:#f4f4f4;font-size:16px;
+  text-transform:uppercase;transition:border-color .2s ease,background .2s ease;
+}
+input:focus{border-color:#ff9830;background:#222228;}
+button{
+  background:#ff9830;border:0;border-radius:12px;padding:12px;width:80px;
+  color:#111;font-weight:bold;font-size:16px;cursor:pointer;
+  transition:opacity .2s ease,transform .1s ease;
+}
+button:active{opacity:.85;transform:scale(.96);}
+.row{display:flex;width:100%;gap:10px;margin-bottom:16px;}
+.listRow{
+  background:#1c1c22;border-radius:14px;padding:14px;margin-bottom:12px;
+  display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+  transition:border .2s ease,background .2s ease;border:2px solid transparent;
+}
+.listRow:hover{background:#24242a;}
+.listRow.active{border-color:#ff9830;background:#26262c;}
+.listTitleText{font-size:18px;flex:1;}
+.delList,.del{
+  background:#ff4d4d;color:#000;border-radius:10px;width:32px;height:32px;
+  display:flex;justify-content:center;align-items:center;font-weight:bold;font-size:18px;
+  transition:transform .1s ease;
+}
+.delList:active,.del:active{transform:scale(.92);}
+.item{
+  background:#1c1c22;border-radius:14px;padding:14px;margin-bottom:12px;
+  display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+  transition:background .25s ease,opacity .25s ease;
+}
+.item:hover{background:#26262c;}
+.item.doneState{opacity:.5;}
+.name{font-size:18px;transition:opacity .25s ease;}
+.done{text-decoration:line-through;opacity:.5;}
+.kpl{opacity:.7;margin-right:10px;font-size:16px;transition:opacity .25s ease;}
+.fadeOut{animation:fadeOut .35s forwards ease-out;}
+@keyframes fadeOut{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(40px);}}
+.clearBtn{
+  background:#ff4d4d;color:#000;width:100%;font-size:15px;padding:12px;
+  border-radius:12px;border:0;margin-top:16px;font-weight:bold;
+}
+.clearBtn:active{transform:scale(.97);}
+hr{border-color:#2b2b2f;}
+</style>
+<link rel="manifest" href="/kauppalista/manifest.json">
+<meta name="theme-color" content="#ff9830">
+<link rel="apple-touch-icon" href="/kauppalista/icons/icon-192.png">
+</head>
+<body>
+<div class='container'>
+<h1>Kauppalistat</h1>
+<div class='row'>
+  <div style='flex:1;'><input id='newListName' placeholder='UUDEN LISTAN NIMI...' oninput='this.value=this.value.toUpperCase()'></div>
+  <div style='display:flex;justify-content:flex-end;'><button onclick='addList()'>Luo</button></div>
+</div>
+<section id='listContainer'></section>
+<hr style='margin:22px 0;'>
+<section id='activeArea' style='display:none;'>
+  <h2 id='listTitle' style='color:#ff9830;margin-bottom:12px;font-size:24px;text-shadow:0 0 8px rgba(255,140,30,0.35);'></h2>
+  <div class='row'>
+    <div style='flex:3;'><input id='itemName' placeholder='TUOTE...' oninput='this.value=this.value.toUpperCase()'></div>
+    <div style='flex:1;'><input id='itemQty' value='1' inputmode='numeric' pattern='[0-9]*'></div>
+    <div style='display:flex;justify-content:flex-end;'><button onclick='addItem()'>Lisää</button></div>
+  </div>
+  <div id='items'></div>
+  <button class='clearBtn' onclick='clearAll()'>Tyhjennä koko lista</button>
+</section>
+<script>
+let state = JSON.parse(localStorage.getItem('multi_list_final') || '{"lists":[], "active":null}');
+function save(){localStorage.setItem('multi_list_final',JSON.stringify(state));render();}
+function addList(){
+  const n=document.getElementById('newListName').value.trim().toUpperCase();
+  if(!n)return;
+  const id=Math.random().toString(36).slice(2);
+  state.lists.push({id,name:n,items:[]});
+  state.active=id;
+  document.getElementById('newListName').value='';
+  save();
+}
+
+function setActive(id){state.active=id;save();}
+function deleteList(id){
+  if(!confirm('Poistetaanko lista?'))return;
+  state.lists=state.lists.filter(l=>l.id!==id);
+  if(state.active===id)state.active=null;
+  save();
+}
+function addItem(){
+  const n=document.getElementById('itemName').value.trim().toUpperCase();
+  const q=document.getElementById('itemQty').value.trim();
+  if(!n)return;
+  const list=state.lists.find(l=>l.id===state.active);
+  list.items.push({id:Math.random().toString(36).slice(2),name:n,qty:q,done:false});
+  document.getElementById('itemName').value='';
+  save();
+}
+function toggle(id){
+  const list=state.lists.find(l=>l.id===state.active);
+  const it=list.items.find(i=>i.id===id);
+  it.done=!it.done;
+  save();
+}
+function del(id){
+  const list=state.lists.find(l=>l.id===state.active);
+  const row=document.getElementById('item-'+id);
+  if(row){
+    row.classList.add('fadeOut');
+    setTimeout(()=>{list.items=list.items.filter(i=>i.id!==id);save();},350);
+  } else {
+    list.items=list.items.filter(i=>i.id!==id);
+    save();
+  }
+}
+function clearAll(){
+  if(!confirm('Tyhjennetäänkö koko lista?'))return;
+  const list=state.lists.find(l=>l.id===state.active);
+  list.items=[];
+  save();
+}
+
+function render(){
+  const lc=document.getElementById('listContainer');
+  lc.innerHTML='';
+  state.lists.forEach(l=>{
+    const r=document.createElement('div');
+    r.className='listRow'+(state.active===l.id?' active':'');
+    r.onclick=()=>setActive(l.id);
+    const t=document.createElement('div');
+    t.className='listTitleText';t.textContent=l.name;
+    const d=document.createElement('button');
+    d.className='delList';d.textContent='✖';
+    d.onclick=e=>{e.stopPropagation();deleteList(l.id);};
+    r.append(t,d);lc.appendChild(r);
+  });
+  const area=document.getElementById('activeArea');
+  if(!state.active){area.style.display='none';return;}
+  area.style.display='block';
+  const list=state.lists.find(l=>l.id===state.active);
+  document.getElementById('listTitle').textContent=list.name;
+  const items=document.getElementById('items');
+  items.innerHTML='';
+  list.items.forEach(i=>{
+    const r=document.createElement('div');
+    r.className='item'+(i.done?' doneState':'');
+    r.id='item-'+i.id;
+    r.onclick=()=>toggle(i.id);
+    const nm=document.createElement('div');
+    nm.className='name'+(i.done?' done':'');
+    nm.textContent=i.name;
+    const right=document.createElement('div');
+    right.style.display='flex';right.style.alignItems='center';
+    const qp=document.createElement('div');
+    qp.className='kpl'+(i.done?' done':'');
+    qp.textContent=i.qty+' kpl';
+    const db=document.createElement('button');
+    db.className='del';db.textContent='✖';
+    db.onclick=e=>{e.stopPropagation();del(i.id);};
+    right.append(qp,db);
+    r.append(nm,right);
+    items.append(r);
+  });
+}
+render();
+</script></div><script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/kauppalista/sw.js");}</script></body></html>
