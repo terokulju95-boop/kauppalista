@@ -5,71 +5,522 @@
 <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1'>
 <title>Kauppalistat</title>
 <style>
-*{box-sizing:border-box;}
+*{box-sizing:border-box;margin:0;padding:0;}
+
+@keyframes gradient-shift{
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+
+@keyframes float{
+  0%, 100%{transform:translateY(0) rotate(0deg);}
+  33%{transform:translateY(-20px) rotate(2deg);}
+  66%{transform:translateY(10px) rotate(-2deg);}
+}
+
+@keyframes glow-pulse{
+  0%, 100%{box-shadow:0 0 20px rgba(255, 152, 48, 0.3), 0 0 40px rgba(255, 152, 48, 0.1);}
+  50%{box-shadow:0 0 30px rgba(255, 152, 48, 0.5), 0 0 60px rgba(255, 152, 48, 0.2);}
+}
+
 body{
-  margin:0;font-family:sans-serif;color:#f4f4f4;
-  background:radial-gradient(circle at top left,#1a1a1d 0%,#0b0b0d 40%,#050506 100%);
-  position:relative;overflow-x:hidden;
+  font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+  color:#ffffff;
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+  background:#0a0a0f;
 }
+
 body::before{
-  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
-  background:linear-gradient(130deg,rgba(255,140,40,0.08),rgba(0,0,0,0),rgba(80,140,255,0.08));
-  animation:amb 12s ease-in-out infinite alternate;
+  content:'';
+  position:fixed;
+  top:-50%;
+  left:-50%;
+  width:200%;
+  height:200%;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 152, 48, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(138, 43, 226, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(30, 144, 255, 0.08) 0%, transparent 50%);
+  animation:float 20s ease-in-out infinite;
   pointer-events:none;
+  z-index:0;
 }
-@keyframes amb{from{transform:translate(-4%,-3%);}to{transform:translate(4%,3%);}}
+
 body::after{
-  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
-  background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAABlBMVEX///8AAABVwtN+AAAAAXRSTlMAQObYZgAAAApJREFUeJxjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=') repeat;
-  opacity:0.07;pointer-events:none;
+  content:'';
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.02) 0px,
+      transparent 1px,
+      transparent 2px,
+      rgba(255,255,255,0.02) 3px
+    );
+  pointer-events:none;
+  z-index:1;
+  opacity:0.5;
 }
-.container{width:100%;max-width:380px;margin:0 auto;padding:16px;}
-h1{color:#ff9830;margin-bottom:22px;font-size:32px;text-shadow:0 0 8px rgba(255,140,30,0.35);}
+
+.container{
+  position:relative;
+  z-index:2;
+  width:100%;
+  max-width:450px;
+  margin:0 auto;
+  padding:24px;
+  min-height:100vh;
+}
+
+.header{
+  text-align:center;
+  margin-bottom:40px;
+  padding:20px 0;
+}
+
+h1{
+  font-size:38px;
+  font-weight:700;
+  letter-spacing:1px;
+  margin-bottom:6px;
+  background:linear-gradient(135deg, #ff9830 0%, #ffb366 50%, #ff9830 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:gradient-text 3s ease infinite;
+  filter:drop-shadow(0 2px 8px rgba(255, 152, 48, 0.3));
+}
+
+@keyframes gradient-text{
+  0%, 100%{background-position:0% center;}
+  50%{background-position:100% center;}
+}
+
+.subtitle{
+  color:#888;
+  font-size:13px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  font-weight:400;
+}
+
+.glass-card{
+  background:rgba(20, 20, 30, 0.6);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255, 255, 255, 0.1);
+  border-radius:20px;
+  padding:24px;
+  margin-bottom:20px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover{
+  transform:translateY(-2px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-color:rgba(255, 152, 48, 0.3);
+}
+
 input{
-  background:#1b1b20;border:1px solid #333;border-radius:12px;
-  padding:12px;width:100%;color:#f4f4f4;font-size:16px;
-  text-transform:uppercase;transition:border-color .2s ease,background .2s ease;
+  background:rgba(30, 30, 40, 0.8);
+  border:2px solid rgba(255, 255, 255, 0.1);
+  border-radius:14px;
+  padding:14px 18px;
+  width:100%;
+  color:#ffffff;
+  font-size:16px;
+  text-transform:uppercase;
+  font-weight:600;
+  letter-spacing:0.5px;
+  transition:all 0.3s ease;
+  outline:none;
 }
-input:focus{border-color:#ff9830;background:#222228;}
+
+input::placeholder{
+  color:rgba(255, 255, 255, 0.3);
+}
+
+input:focus{
+  border-color:#ff9830;
+  background:rgba(30, 30, 40, 0.95);
+  box-shadow:0 0 0 4px rgba(255, 152, 48, 0.1);
+  transform:translateY(-1px);
+}
+
 button{
-  background:#ff9830;border:0;border-radius:12px;padding:12px;width:80px;
-  color:#111;font-weight:bold;font-size:16px;cursor:pointer;
-  transition:opacity .2s ease,transform .1s ease;
+  background:linear-gradient(135deg, #ff9830 0%, #ff7a00 100%);
+  border:0;
+  border-radius:14px;
+  padding:14px 24px;
+  color:#000000;
+  font-weight:800;
+  font-size:16px;
+  cursor:pointer;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:0 4px 15px rgba(255, 152, 48, 0.4);
+  position:relative;
+  overflow:hidden;
 }
-button:active{opacity:.85;transform:scale(.96);}
-.row{display:flex;width:100%;gap:10px;margin-bottom:16px;}
+
+button::before{
+  content:'';
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:0;
+  height:0;
+  border-radius:50%;
+  background:rgba(255, 255, 255, 0.3);
+  transform:translate(-50%, -50%);
+  transition:width 0.6s, height 0.6s;
+}
+
+button:hover::before{
+  width:300px;
+  height:300px;
+}
+
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 25px rgba(255, 152, 48, 0.6);
+}
+
+button:active{
+  transform:translateY(0) scale(0.98);
+}
+
+.btn-add{
+  min-width:90px;
+}
+
+.row{
+  display:flex;
+  width:100%;
+  gap:12px;
+  align-items:stretch;
+}
+
 .listRow{
-  background:#1c1c22;border-radius:14px;padding:14px;margin-bottom:12px;
-  display:flex;justify-content:space-between;align-items:center;cursor:pointer;
-  transition:border .2s ease,background .2s ease;border:2px solid transparent;
+  background:rgba(25, 25, 40, 0.7);
+  backdrop-filter:blur(10px);
+  border-radius:16px;
+  padding:18px 20px;
+  margin-bottom:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border:2px solid transparent;
+  position:relative;
+  overflow:hidden;
 }
-.listRow:hover{background:#24242a;}
-.listRow.active{border-color:#ff9830;background:#26262c;}
-.listTitleText{font-size:18px;flex:1;}
-.delList,.del{
-  background:#ff4d4d;color:#000;border-radius:10px;width:32px;height:32px;
-  display:flex;justify-content:center;align-items:center;font-weight:bold;font-size:18px;
-  transition:transform .1s ease;
+
+.listRow::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:100%;
+  height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255, 152, 48, 0.1), transparent);
+  transition:left 0.5s;
 }
-.delList:active,.del:active{transform:scale(.92);}
+
+.listRow:hover::before{
+  left:100%;
+}
+
+.listRow:hover{
+  background:rgba(35, 35, 50, 0.8);
+  transform:translateX(4px);
+}
+
+.listRow.active{
+  border-color:#ff9830;
+  background:rgba(255, 152, 48, 0.1);
+  box-shadow:0 0 20px rgba(255, 152, 48, 0.2);
+}
+
+.listRow.active::after{
+  content:'';
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:4px;
+  background:linear-gradient(180deg, #ff9830, #ff7a00);
+  box-shadow:0 0 10px rgba(255, 152, 48, 0.8);
+}
+
+.listTitleText{
+  font-size:20px;
+  font-weight:700;
+  flex:1;
+  letter-spacing:1px;
+  color:#ffffff;
+  transition:color 0.3s;
+}
+
+.listRow.active .listTitleText{
+  color:#ff9830;
+}
+
+.count-badge{
+  background:rgba(255, 152, 48, 0.2);
+  color:#ff9830;
+  padding:4px 12px;
+  border-radius:20px;
+  font-size:13px;
+  font-weight:700;
+  margin-right:12px;
+  border:1px solid rgba(255, 152, 48, 0.3);
+}
+
+.delList, .del{
+  background:linear-gradient(135deg, #ff4d4d 0%, #cc0000 100%);
+  color:#ffffff;
+  border-radius:12px;
+  width:40px;
+  height:40px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-weight:900;
+  font-size:20px;
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border:0;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(255, 77, 77, 0.4);
+  flex-shrink:0;
+}
+
+.delList:hover, .del:hover{
+  transform:rotate(90deg) scale(1.1);
+  box-shadow:0 6px 20px rgba(255, 77, 77, 0.6);
+}
+
+.delList:active, .del:active{
+  transform:rotate(90deg) scale(1);
+}
+
 .item{
-  background:#1c1c22;border-radius:14px;padding:14px;margin-bottom:12px;
-  display:flex;justify-content:space-between;align-items:center;cursor:pointer;
-  transition:background .25s ease,opacity .25s ease;
+  background:rgba(25, 25, 40, 0.6);
+  backdrop-filter:blur(10px);
+  border-radius:16px;
+  padding:18px 20px;
+  margin-bottom:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border:2px solid rgba(255, 255, 255, 0.05);
+  position:relative;
 }
-.item:hover{background:#26262c;}
-.item.doneState{opacity:.5;}
-.name{font-size:18px;transition:opacity .25s ease;}
-.done{text-decoration:line-through;opacity:.5;}
-.kpl{opacity:.7;margin-right:10px;font-size:16px;transition:opacity .25s ease;}
-.fadeOut{animation:fadeOut .35s forwards ease-out;}
-@keyframes fadeOut{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(40px);}}
+
+.item::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:4px;
+  background:linear-gradient(180deg, #4a9eff, #1e90ff);
+  opacity:0;
+  transition:opacity 0.3s;
+  border-radius:16px 0 0 16px;
+}
+
+.item:hover{
+  background:rgba(35, 35, 50, 0.8);
+  transform:translateX(4px);
+  border-color:rgba(74, 158, 255, 0.3);
+}
+
+.item:hover::before{
+  opacity:1;
+}
+
+.item.doneState{
+  opacity:0.5;
+  background:rgba(20, 40, 20, 0.4);
+}
+
+.item.doneState::before{
+  background:linear-gradient(180deg, #4ade80, #22c55e);
+}
+
+.name{
+  font-size:18px;
+  font-weight:600;
+  transition:all 0.3s ease;
+  flex:1;
+  letter-spacing:0.5px;
+}
+
+.done{
+  text-decoration:line-through;
+  opacity:0.6;
+}
+
+.kpl{
+  opacity:0.7;
+  margin-right:14px;
+  font-size:15px;
+  font-weight:600;
+  color:#a0a0a0;
+  transition:all 0.3s ease;
+  padding:6px 12px;
+  background:rgba(255, 255, 255, 0.05);
+  border-radius:8px;
+}
+
+.fadeOut{
+  animation:fadeOut 0.4s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes fadeOut{
+  0%{
+    opacity:1;
+    transform:translateX(0) scale(1);
+  }
+  50%{
+    opacity:0.5;
+    transform:translateX(20px) scale(0.95);
+  }
+  100%{
+    opacity:0;
+    transform:translateX(60px) scale(0.8);
+    height:0;
+    padding:0;
+    margin:0;
+  }
+}
+
 .clearBtn{
-  background:#ff4d4d;color:#000;width:100%;font-size:15px;padding:12px;
-  border-radius:12px;border:0;margin-top:16px;font-weight:bold;
+  background:linear-gradient(135deg, #ff4d4d 0%, #cc0000 100%);
+  color:#ffffff;
+  width:100%;
+  font-size:16px;
+  padding:16px;
+  border-radius:14px;
+  border:0;
+  margin-top:24px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  box-shadow:0 4px 15px rgba(255, 77, 77, 0.4);
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.clearBtn:active{transform:scale(.97);}
-hr{border-color:#2b2b2f;}
+
+.clearBtn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 25px rgba(255, 77, 77, 0.6);
+}
+
+.clearBtn:active{
+  transform:translateY(0) scale(0.98);
+}
+
+.divider{
+  height:2px;
+  background:linear-gradient(90deg, transparent, rgba(255, 152, 48, 0.3), transparent);
+  margin:32px 0;
+  border:0;
+  position:relative;
+}
+
+.divider::after{
+  content:'◆';
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%, -50%);
+  background:#0a0a0f;
+  padding:0 12px;
+  color:#ff9830;
+  font-size:12px;
+}
+
+#activeArea{
+  animation:slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn{
+  from{
+    opacity:0;
+    transform:translateY(20px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+.list-title-section{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:24px;
+  padding:20px;
+  background:rgba(255, 152, 48, 0.05);
+  border-radius:16px;
+  border:1px solid rgba(255, 152, 48, 0.2);
+}
+
+.list-title-section h2{
+  color:#ff9830;
+  font-size:28px;
+  font-weight:800;
+  letter-spacing:1px;
+  margin:0;
+}
+
+.empty-state{
+  text-align:center;
+  padding:60px 20px;
+  opacity:0.5;
+}
+
+.empty-state-icon{
+  font-size:64px;
+  margin-bottom:16px;
+  opacity:0.3;
+}
+
+.empty-state-text{
+  font-size:16px;
+  color:#a0a0a0;
+  letter-spacing:1px;
+}
+
+/* Smooth scrolling */
+html{
+  scroll-behavior:smooth;
+}
+
+/* Selection colors */
+::selection{
+  background:rgba(255, 152, 48, 0.3);
+  color:#ffffff;
+}
 </style>
 <link rel="manifest" href="/kauppalista/manifest.json">
 <meta name="theme-color" content="#ff9830">
@@ -77,117 +528,224 @@ hr{border-color:#2b2b2f;}
 </head>
 <body>
 <div class='container'>
-<h1>Kauppalistat</h1>
-<div class='row'>
-  <div style='flex:1;'><input id='newListName' placeholder='UUDEN LISTAN NIMI...' oninput='this.value=this.value.toUpperCase()'></div>
-  <div style='display:flex;justify-content:flex-end;'><button onclick='addList()'>Luo</button></div>
-</div>
-<section id='listContainer'></section>
-<hr style='margin:22px 0;'>
-<section id='activeArea' style='display:none;'>
-  <h2 id='listTitle' style='color:#ff9830;margin-bottom:12px;font-size:24px;text-shadow:0 0 8px rgba(255,140,30,0.35);'></h2>
-  <div class='row'>
-    <div style='flex:3;'><input id='itemName' placeholder='TUOTE...' oninput='this.value=this.value.toUpperCase()'></div>
-    <div style='flex:1;'><input id='itemQty' value='1' inputmode='numeric' pattern='[0-9]*'></div>
-    <div style='display:flex;justify-content:flex-end;'><button onclick='addItem()'>Lisää</button></div>
+  <div class='header'>
+    <h1>Kauppalistat</h1>
+    <div class='subtitle'>Älykäs ostoslista</div>
   </div>
-  <div id='items'></div>
-  <button class='clearBtn' onclick='clearAll()'>Tyhjennä koko lista</button>
-</section>
+
+  <div class='glass-card'>
+    <div class='row'>
+      <div style='flex:1;'>
+        <input id='newListName' placeholder='Uuden listan nimi...' oninput='this.value=this.value.toUpperCase()'>
+      </div>
+      <button class='btn-add' onclick='addList()'>Luo</button>
+    </div>
+  </div>
+
+  <section id='listContainer'></section>
+  
+  <hr class='divider'>
+  
+  <section id='activeArea' style='display:none;'>
+    <div class='list-title-section'>
+      <h2 id='listTitle'></h2>
+    </div>
+    
+    <div class='glass-card'>
+      <div class='row' style='margin-bottom:12px;'>
+        <div style='flex:3;'>
+          <input id='itemName' placeholder='Tuote...' oninput='this.value=this.value.toUpperCase()'>
+        </div>
+        <div style='flex:1;'>
+          <input id='itemQty' value='1' inputmode='numeric' pattern='[0-9]*'>
+        </div>
+      </div>
+      <button class='btn-add' style='width:100%;' onclick='addItem()'>Lisää tuote</button>
+    </div>
+    
+    <div id='items'></div>
+    
+    <button class='clearBtn' onclick='clearAll()'>🗑️ Tyhjennä lista</button>
+  </section>
+</div>
+
 <script>
 let state = JSON.parse(localStorage.getItem('multi_list_final') || '{"lists":[], "active":null}');
-function save(){localStorage.setItem('multi_list_final',JSON.stringify(state));render();}
+
+function save(){
+  localStorage.setItem('multi_list_final', JSON.stringify(state));
+  render();
+}
+
 function addList(){
-  const n=document.getElementById('newListName').value.trim().toUpperCase();
-  if(!n)return;
-  const id=Math.random().toString(36).slice(2);
-  state.lists.push({id,name:n,items:[]});
-  state.active=id;
-  document.getElementById('newListName').value='';
+  const n = document.getElementById('newListName').value.trim().toUpperCase();
+  if(!n) return;
+  const id = Math.random().toString(36).slice(2);
+  state.lists.push({id, name:n, items:[]});
+  state.active = id;
+  document.getElementById('newListName').value = '';
   save();
 }
 
-function setActive(id){state.active=id;save();}
+function setActive(id){
+  state.active = id;
+  save();
+}
+
 function deleteList(id){
-  if(!confirm('Poistetaanko lista?'))return;
-  state.lists=state.lists.filter(l=>l.id!==id);
-  if(state.active===id)state.active=null;
+  if(!confirm('Poistetaanko lista pysyvästi?')) return;
+  state.lists = state.lists.filter(l => l.id !== id);
+  if(state.active === id) state.active = null;
   save();
 }
+
 function addItem(){
-  const n=document.getElementById('itemName').value.trim().toUpperCase();
-  const q=document.getElementById('itemQty').value.trim();
-  if(!n)return;
-  const list=state.lists.find(l=>l.id===state.active);
-  list.items.push({id:Math.random().toString(36).slice(2),name:n,qty:q,done:false});
-  document.getElementById('itemName').value='';
+  const n = document.getElementById('itemName').value.trim().toUpperCase();
+  const q = document.getElementById('itemQty').value.trim();
+  if(!n) return;
+  const list = state.lists.find(l => l.id === state.active);
+  list.items.push({id:Math.random().toString(36).slice(2), name:n, qty:q, done:false});
+  document.getElementById('itemName').value = '';
+  document.getElementById('itemQty').value = '1';
   save();
 }
+
 function toggle(id){
-  const list=state.lists.find(l=>l.id===state.active);
-  const it=list.items.find(i=>i.id===id);
-  it.done=!it.done;
+  const list = state.lists.find(l => l.id === state.active);
+  const it = list.items.find(i => i.id === id);
+  it.done = !it.done;
   save();
 }
+
 function del(id){
-  const list=state.lists.find(l=>l.id===state.active);
-  const row=document.getElementById('item-'+id);
+  const list = state.lists.find(l => l.id === state.active);
+  const row = document.getElementById('item-'+id);
   if(row){
     row.classList.add('fadeOut');
-    setTimeout(()=>{list.items=list.items.filter(i=>i.id!==id);save();},350);
+    setTimeout(() => {
+      list.items = list.items.filter(i => i.id !== id);
+      save();
+    }, 400);
   } else {
-    list.items=list.items.filter(i=>i.id!==id);
+    list.items = list.items.filter(i => i.id !== id);
     save();
   }
 }
+
 function clearAll(){
-  if(!confirm('Tyhjennetäänkö koko lista?'))return;
-  const list=state.lists.find(l=>l.id===state.active);
-  list.items=[];
+  if(!confirm('Tyhjennetäänkö koko lista?')) return;
+  const list = state.lists.find(l => l.id === state.active);
+  list.items = [];
   save();
 }
 
 function render(){
-  const lc=document.getElementById('listContainer');
-  lc.innerHTML='';
-  state.lists.forEach(l=>{
-    const r=document.createElement('div');
-    r.className='listRow'+(state.active===l.id?' active':'');
-    r.onclick=()=>setActive(l.id);
-    const t=document.createElement('div');
-    t.className='listTitleText';t.textContent=l.name;
-    const d=document.createElement('button');
-    d.className='delList';d.textContent='✖';
-    d.onclick=e=>{e.stopPropagation();deleteList(l.id);};
-    r.append(t,d);lc.appendChild(r);
+  const lc = document.getElementById('listContainer');
+  lc.innerHTML = '';
+  
+  if(state.lists.length === 0){
+    lc.innerHTML = `
+      <div class='empty-state'>
+        <div class='empty-state-icon'>📝</div>
+        <div class='empty-state-text'>Luo ensimmäinen listasi</div>
+      </div>
+    `;
+  }
+  
+  state.lists.forEach(l => {
+    const r = document.createElement('div');
+    r.className = 'listRow' + (state.active === l.id ? ' active' : '');
+    r.onclick = () => setActive(l.id);
+    
+    const t = document.createElement('div');
+    t.className = 'listTitleText';
+    t.textContent = l.name;
+    
+    const rightSide = document.createElement('div');
+    rightSide.style.display = 'flex';
+    rightSide.style.alignItems = 'center';
+    rightSide.style.gap = '8px';
+    
+    if(l.items.length > 0){
+      const badge = document.createElement('div');
+      badge.className = 'count-badge';
+      badge.textContent = l.items.length;
+      rightSide.appendChild(badge);
+    }
+    
+    const d = document.createElement('button');
+    d.className = 'delList';
+    d.textContent = '✖';
+    d.onclick = e => {
+      e.stopPropagation();
+      deleteList(l.id);
+    };
+    
+    rightSide.appendChild(d);
+    r.append(t, rightSide);
+    lc.appendChild(r);
   });
-  const area=document.getElementById('activeArea');
-  if(!state.active){area.style.display='none';return;}
-  area.style.display='block';
-  const list=state.lists.find(l=>l.id===state.active);
-  document.getElementById('listTitle').textContent=list.name;
-  const items=document.getElementById('items');
-  items.innerHTML='';
-  list.items.forEach(i=>{
-    const r=document.createElement('div');
-    r.className='item'+(i.done?' doneState':'');
-    r.id='item-'+i.id;
-    r.onclick=()=>toggle(i.id);
-    const nm=document.createElement('div');
-    nm.className='name'+(i.done?' done':'');
-    nm.textContent=i.name;
-    const right=document.createElement('div');
-    right.style.display='flex';right.style.alignItems='center';
-    const qp=document.createElement('div');
-    qp.className='kpl'+(i.done?' done':'');
-    qp.textContent=i.qty+' kpl';
-    const db=document.createElement('button');
-    db.className='del';db.textContent='✖';
-    db.onclick=e=>{e.stopPropagation();del(i.id);};
-    right.append(qp,db);
-    r.append(nm,right);
+  
+  const area = document.getElementById('activeArea');
+  if(!state.active){
+    area.style.display = 'none';
+    return;
+  }
+  
+  area.style.display = 'block';
+  const list = state.lists.find(l => l.id === state.active);
+  document.getElementById('listTitle').textContent = list.name;
+  
+  const items = document.getElementById('items');
+  items.innerHTML = '';
+  
+  if(list.items.length === 0){
+    items.innerHTML = `
+      <div class='empty-state'>
+        <div class='empty-state-icon'>🛒</div>
+        <div class='empty-state-text'>Lista on tyhjä</div>
+      </div>
+    `;
+  }
+  
+  list.items.forEach(i => {
+    const r = document.createElement('div');
+    r.className = 'item' + (i.done ? ' doneState' : '');
+    r.id = 'item-' + i.id;
+    r.onclick = () => toggle(i.id);
+    
+    const nm = document.createElement('div');
+    nm.className = 'name' + (i.done ? ' done' : '');
+    nm.textContent = i.done ? '✓ ' + i.name : i.name;
+    
+    const right = document.createElement('div');
+    right.style.display = 'flex';
+    right.style.alignItems = 'center';
+    
+    const qp = document.createElement('div');
+    qp.className = 'kpl' + (i.done ? ' done' : '');
+    qp.textContent = i.qty + ' kpl';
+    
+    const db = document.createElement('button');
+    db.className = 'del';
+    db.textContent = '✖';
+    db.onclick = e => {
+      e.stopPropagation();
+      del(i.id);
+    };
+    
+    right.append(qp, db);
+    r.append(nm, right);
     items.append(r);
   });
 }
+
 render();
-</script></div><script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/kauppalista/sw.js");}</script></body></html>
+</script>
+<script>
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("/kauppalista/sw.js");
+}
+</script>
+</body>
+</html>
