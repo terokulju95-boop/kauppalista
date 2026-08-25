@@ -216,6 +216,87 @@ html{scroll-behavior:smooth;}
 #updateBar.show{display:flex;animation:slideIn 0.3s cubic-bezier(0.4,0,0.2,1);}
 #updateBar .txt{flex:1;font-size:14px;font-weight:600;color:#fff;letter-spacing:0.3px;}
 #updateBar button{padding:10px 16px;font-size:14px;border-radius:12px;flex-shrink:0;}
+/* ---------- Kategoriaotsikot ---------- */
+.catHeader{
+  display:flex;align-items:center;gap:10px;margin:22px 0 10px;padding:0 4px;
+  font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#8b8ba0;
+}
+.catHeader:first-child{margin-top:4px;}
+.catHeader .catIcon{font-size:16px;letter-spacing:0;}
+.catHeader .catLine{flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0.14),transparent);}
+.catHeader .catCount{color:#5f5f75;font-weight:700;letter-spacing:1px;}
+.catHeader.doneHeader{color:#4ade80;cursor:pointer;user-select:none;margin-top:26px;}
+.catHeader.doneHeader .catLine{background:linear-gradient(90deg,rgba(74,222,128,0.25),transparent);}
+.catHeader.doneHeader .chev{transition:transform 0.25s ease;font-size:11px;}
+.catHeader.doneHeader.collapsed .chev{transform:rotate(-90deg);}
+
+/* ---------- Edistyminen ---------- */
+.list-title-section{flex-direction:column;align-items:stretch;gap:14px;}
+.titleRow{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.progressWrap{display:flex;align-items:center;gap:12px;}
+.progressBar{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,0.08);overflow:hidden;}
+.progressFill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#4ade80,#22c55e);transition:width 0.45s cubic-bezier(0.4,0,0.2,1);}
+.progressText{font-size:12px;font-weight:700;letter-spacing:1px;color:#9a9ab0;white-space:nowrap;}
+.hideBtn{
+  background:rgba(255,255,255,0.06);color:#c8c8d8;border:1px solid rgba(255,255,255,0.12);
+  box-shadow:none;padding:9px 14px;font-size:11px;letter-spacing:1px;border-radius:11px;white-space:nowrap;
+}
+.hideBtn:hover{background:rgba(255,255,255,0.12);color:#fff;transform:none;box-shadow:none;}
+
+/* ---------- Ehdotukset ---------- */
+.suggWrap{margin-top:12px;display:none;}
+.suggWrap.show{display:block;animation:slideIn 0.25s cubic-bezier(0.4,0,0.2,1);}
+.suggLabel{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#6f6f88;margin-bottom:8px;}
+.suggChips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{
+  background:rgba(74,158,255,0.12);border:1px solid rgba(74,158,255,0.35);color:#9dcaff;
+  border-radius:999px;padding:9px 14px;font-size:13px;font-weight:700;letter-spacing:0.5px;
+  cursor:pointer;box-shadow:none;text-transform:uppercase;
+}
+.chip:hover{background:rgba(74,158,255,0.22);color:#fff;transform:none;box-shadow:none;}
+.chip:active{transform:scale(0.96);}
+.chip .chipIcon{margin-right:6px;}
+
+/* ---------- Muokkaus ---------- */
+.item.editing{border-color:rgba(255,152,48,0.55);background:rgba(40,32,22,0.92);cursor:default;flex-direction:column;align-items:stretch;gap:10px;}
+.item.editing:hover{transform:none;background:rgba(40,32,22,0.92);}
+.editGrid{display:flex;gap:10px;}
+.editGrid .qtyBox{flex:0 0 92px;}
+.editGrid .catBox{flex:1;}
+.item.editing input,.item.editing select{
+  padding:12px 14px;font-size:15px;border-radius:12px;text-transform:none;
+}
+.item.editing select{
+  width:100%;background:rgba(30,30,40,0.9);border:2px solid rgba(255,255,255,0.1);
+  color:#fff;font-weight:600;font-family:inherit;outline:none;appearance:none;
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff9830' stroke-width='3'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px;
+}
+.item.editing select:focus{border-color:#ff9830;}
+.editActions{display:flex;gap:10px;}
+.editActions button{flex:1;padding:12px;font-size:14px;}
+.btnCancel{background:rgba(255,255,255,0.08);color:#d8d8e8;box-shadow:none;border:1px solid rgba(255,255,255,0.12);}
+.btnCancel:hover{background:rgba(255,255,255,0.16);color:#fff;box-shadow:none;}
+
+/* ---------- Rivin napit ---------- */
+.rowBtns{display:flex;align-items:center;gap:8px;}
+.edit{
+  background:rgba(255,255,255,0.07);color:#cfcfe4;border:1px solid rgba(255,255,255,0.14);
+  border-radius:12px;width:38px;height:38px;display:flex;justify-content:center;align-items:center;
+  font-size:16px;cursor:pointer;box-shadow:none;flex-shrink:0;padding:0;
+  transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.edit:hover{background:rgba(255,152,48,0.18);border-color:rgba(255,152,48,0.5);color:#ff9830;transform:none;box-shadow:none;}
+.edit:active{transform:scale(0.92);}
+.del{width:38px;height:38px;font-size:18px;}
+.kpl{margin-right:10px;padding:5px 10px;font-size:14px;}
+.name{font-size:17px;}
+
+/* ---------- Liikkeen vähennys ---------- */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
+}
+
 </style>
 <link rel="manifest" href="/kauppalista/manifest.json">
 <meta name="theme-color" content="#ff9830">
@@ -255,18 +336,29 @@ html{scroll-behavior:smooth;}
   <hr class='divider'>
   <section id='activeArea' style='display:none;'>
     <div class='list-title-section'>
-      <h2 id='listTitle'></h2>
+      <div class='titleRow'>
+        <h2 id='listTitle'></h2>
+        <button class='hideBtn' id='hideDoneBtn' type='button' onclick='toggleHideDone()'>Piilota ostetut</button>
+      </div>
+      <div class='progressWrap'>
+        <div class='progressBar'><div class='progressFill' id='progressFill'></div></div>
+        <div class='progressText' id='progressText'></div>
+      </div>
     </div>
     <div class='glass-card'>
       <div class='row' style='margin-bottom:12px;'>
         <div style='flex:3;'>
-          <input id='itemName' placeholder='Tuote...' oninput='this.value=this.value.toUpperCase()'>
+          <input id='itemName' placeholder='Tuote...' autocomplete='off'>
         </div>
         <div style='flex:1;'>
           <input id='itemQty' value='1' inputmode='numeric' pattern='[0-9]*'>
         </div>
       </div>
       <button class='btn-add' style='width:100%;' onclick='addItem()'>Lisää tuote</button>
+      <div class='suggWrap' id='suggWrap'>
+        <div class='suggLabel' id='suggLabel'>Usein ostetut</div>
+        <div class='suggChips' id='suggChips'></div>
+      </div>
     </div>
     <div id='items'></div>
     <button class='clearBtn' onclick='clearAll()'>🗑️ Tyhjennä lista</button>
@@ -291,9 +383,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// KORJAUS 3: Firestoren oma offline-varasto (IndexedDB).
-// Kirjoitukset tallentuvat puhelimeen heti ja jonottuvat itsestään,
-// kunnes verkko palaa. Mitään ei enää häviä kaupassa katvealueella.
+// Firestoren oma offline-varasto (IndexedDB): kirjoitukset tallentuvat
+// puhelimeen heti ja jonottuvat itsestään kunnes verkko palaa.
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
@@ -301,8 +392,6 @@ const db = initializeFirestore(app, {
 const USERS = ['TERO', 'ISKÄ'];
 const EMOJI = { 'TERO': '🧔', 'ISKÄ': '👴' };
 
-// KORJAUS 5: lista = oma dokumenttinsa -> kaksi laitetta ei kirjoita toistensa yli
-// KORJAUS 6: 'active' ei ole enää synkronoitavassa tilassa vaan pelkästään puhelimessa
 let states  = { 'TERO': { lists: [] }, 'ISKÄ': { lists: [] } };
 let active  = { 'TERO': null, 'ISKÄ': null };
 let lastSig = { 'TERO': null, 'ISKÄ': null };
@@ -314,7 +403,212 @@ const unsubs = {};
 let pendingWrites = false;
 let ready = false;
 
+let editingId = null;   // muokattavana oleva tuote
+let editBuf = null;     // {name, qty, cat} – säilyy vaikka näkymä piirtyisi uusiksi
+let hideDone = false;
+let doneCollapsed = false;
+
 const rid = () => Math.random().toString(36).slice(2, 11);
+const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+function readJSON(key, fallback){
+  try { const raw = localStorage.getItem(key); return raw ? (JSON.parse(raw) ?? fallback) : fallback; }
+  catch(e){ return fallback; }
+}
+function writeJSON(key, value){
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e){}
+}
+
+// ============================================================
+//  KAUPPAJÄRJESTYS
+//  Ylhäältä alas siinä järjestyksessä kuin kaupassa kävellään.
+//  Vaihda rivien järjestystä jos oma kauppasi on eri mallinen.
+// ============================================================
+const CATEGORIES = [
+  { id:'hevi',    name:'Hedelmät ja vihannekset', icon:'🥬' },
+  { id:'leipa',   name:'Leipä ja leivonnaiset',   icon:'🍞' },
+  { id:'liha',    name:'Liha ja kala',            icon:'🥩' },
+  { id:'maito',   name:'Maito, juusto ja munat',  icon:'🥛' },
+  { id:'eines',   name:'Einekset ja valmisruoat', icon:'🍱' },
+  { id:'kuiva',   name:'Kuivatuotteet',           icon:'🍝' },
+  { id:'mauste',  name:'Mausteet ja leivonta',    icon:'🧂' },
+  { id:'herkku',  name:'Herkut ja naposteltavat', icon:'🍫' },
+  { id:'juoma',   name:'Juomat',                  icon:'🧃' },
+  { id:'pakaste', name:'Pakasteet',               icon:'🧊' },
+  { id:'koti',    name:'Koti ja hygienia',        icon:'🧻' },
+  { id:'muu',     name:'Muut',                    icon:'📦' }
+];
+const CAT_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+
+// Hakusanat -> kategoria. Pisin osuma voittaa, joten MAITOSUKLAA menee
+// herkkuihin eikä maitohyllyyn.
+const CAT_WORDS = {
+  hevi: ['omena','banaani','appelsiini','sitruuna','lime','greippi','mandariini','päärynä',
+    'viinirypäle','rypäle','mansikka','mustikka','vadelma','puolukka','karpalo','ananas',
+    'meloni','kiivi','persikka','nektariini','luumu','taateli','avokado','tomaatti','kurkku',
+    'salaatti','paprika','porkkana','sipuli','valkosipuli','purjo','peruna','bataatti',
+    'kaali','kukkakaali','parsakaali','parsa','lanttu','nauris','punajuuri','retiisi',
+    'herne','maissi','herkkusieni','sieni','kesäkurpitsa','kurpitsa','munakoiso','inkivääri',
+    'chili','basilika','persilja','ruohosipuli','korianteri','minttu','yrtti','idut','pinaatti'],
+  leipa: ['ruisleipä','paahtoleipä','näkkileipä','pitaleipä','leipä','sämpylä','patonki',
+    'rieska','tortilla','wrap','croissant','pulla','korvapuusti','munkki','donitsi','kakku',
+    'leivos','karjalanpiirakka','piirakka','ohrarieska','hampurilaissämpylä','bagel'],
+  liha: ['jauheliha','broileri','kanafile','kana','kalkkuna','possu','porsas','nauta','härkä',
+    'pihvi','kyljys','file','ribs','grillimakkara','makkara','nakki','lenkki','pekoni','kinkku',
+    'leikkele','salami','meetvursti','maksa','lohi','kirjolohi','silakka','seiti','turska',
+    'tonnikala','katkarapu','muikku','kala','tofu','härkis','nyhtökaura','soijasuikale','falafel'],
+  maito: ['kevytmaito','rasvaton maito','täysmaito','laktoositon maito','maito','piimä',
+    'kuohukerma','ruokakerma','vispikerma','ranskankerma','smetana','kerma','jogurtti','rahka',
+    'viili','juusto','edam','emmental','cheddar','mozzarella','feta','aura','raejuusto',
+    'tuorejuusto','sulatejuusto','voi','margariini','levite','oivariini','kananmuna','muna',
+    'kaurajuoma','soijajuoma','mantelimaito','kauramaito'],
+  eines: ['eines','valmisruoka','laatikko','lasagne','keitto','sushi','wok','kebab','nuudelikuppi',
+    'pyttipannu','kaalikääryle','lihapulla','lihapyörykkä','pastasalaatti','valmissalaatti','hummus'],
+  kuiva: ['spagetti','makaroni','penne','pasta','riisi','couscous','bulgur','nuudeli',
+    'kaurahiutale','hiutale','mysli','murot','muro','cornflakes','leseet','vehnäjauho','ruisjauho',
+    'jauho','säilyke','kikherne','linssi','papu','tomaattimurska','tomaattipyre','oliiviöljy',
+    'rypsiöljy','öljy','etikka','ketsuppi','sinappi','majoneesi','soijakastike','kastike',
+    'hunaja','hillo','marmeladi','maapähkinävoi','keksipohja'],
+  mauste: ['suola','mustapippuri','pippuri','mauste','kaneli','vaniljasokeri','tomusokeri',
+    'sokeri','leivinjauhe','hiiva','ruokasooda','currykastike','curry','paprikajauhe','oregano',
+    'timjami','rosmariini','kumina','liemikuutio','fondi','vanilja','siirappi','kaakaojauhe'],
+  herkku: ['maitosuklaa','suklaa','karkki','makeinen','keksi','pipari','sipsi','perunalastu',
+    'popcorn','naksu','cashew','manteli','maapähkinä','pähkinä','lakritsi','salmiakki',
+    'purukumi','patukka','pastilli','dippi','juustonaksu','irtokarkki'],
+  juoma: ['kivennäisvesi','mineraalivesi','vesipullo','limsa','limonadi','cola','kokis','jaffa',
+    'appelsiinimehu','omenamehu','tuoremehu','mehu','suodatinkahvi','kahvi','tee','energiajuoma',
+    'urheilujuoma','smoothie','olut','siideri','lonkero','viini','vesi'],
+  pakaste: ['pakaste','jäätelö','kalapuikko','ranskalaiset','ranskanperuna','pakastemarja',
+    'lehtitaikina','voitaikina','nugetti','pizza','kermaperuna','marja'],
+  koti: ['wc-paperi','vessapaperi','talouspaperi','käsipyyhe','pyykinpesuaine','huuhteluaine',
+    'astianpesuaine','konetiskiaine','tiskiaine','tiskiharja','pesuaine','yleispuhdistusaine',
+    'siivousaine','käsisaippua','saippua','shampoo','hoitoaine','suihkusaippua','hammastahna',
+    'hammasharja','deodorantti','partavaahto','partaterä','roskapussi','jätepussi','alumiinifolio',
+    'folio','leivinpaperi','tuorekelmu','lamppu','paristo','kissanruoka','koiranruoka',
+    'kissanhiekka','vaippa','terveysside','tampooni','laastari','särkylääke','burana','panadol',
+    'nenäliina','kosteuspyyhe','talouspyyhe']
+};
+
+// Pisin hakusana ensin, jotta tarkin osuma voittaa.
+const CAT_INDEX = Object.entries(CAT_WORDS)
+  .flatMap(([cat, words]) => words.map(w => [w, cat]))
+  .sort((a, b) => b[0].length - a[0].length);
+
+const normName = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+function guessCategory(name){
+  const n = normName(name);
+  if (!n) return 'muu';
+  const learned = readJSON('kauppalista_opitut_' + currentUser, {});
+  if (learned[n] && CAT_BY_ID[learned[n]]) return learned[n];
+  for (const [word, cat] of CAT_INDEX){ if (n.includes(word)) return cat; }
+  return 'muu';
+}
+
+function itemCategory(it){
+  return (it.cat && CAT_BY_ID[it.cat]) ? it.cat : guessCategory(it.name);
+}
+
+function learnCategory(name, cat){
+  const key = 'kauppalista_opitut_' + currentUser;
+  const learned = readJSON(key, {});
+  learned[normName(name)] = cat;
+  writeJSON(key, learned);
+}
+
+
+// ============================================================
+//  OSTOSHISTORIA (vain tässä puhelimessa)
+//  { "maito": { n: kertaa, t: viimeksi, c: kategoria } }
+// ============================================================
+const histKey = () => 'kauppalista_historia_' + currentUser;
+
+function recordHistory(name, cat){
+  const key = normName(name);
+  if (!key) return;
+  const h = readJSON(histKey(), {});
+  const prev = h[key] || { n: 0, t: 0 };
+  h[key] = { n: prev.n + 1, t: Date.now(), c: cat || prev.c || 'muu' };
+
+  const entries = Object.entries(h);
+  if (entries.length > 400){
+    entries.sort((a, b) => (b[1].n - a[1].n) || (b[1].t - a[1].t));
+    writeJSON(histKey(), Object.fromEntries(entries.slice(0, 300)));
+  } else {
+    writeJSON(histKey(), h);
+  }
+}
+
+function forgetHistory(name){
+  const h = readJSON(histKey(), {});
+  delete h[normName(name)];
+  writeJSON(histKey(), h);
+}
+
+// Ensimmäisellä kerralla poimitaan nimet olemassa olevista listoista,
+// jottei ehdotuslaatikko ole tyhjä heti alussa.
+function seedHistory(user){
+  const flag = 'kauppalista_hist_alustettu_' + user;
+  if (localStorage.getItem(flag)) return;
+  const h = readJSON('kauppalista_historia_' + user, {});
+  states[user].lists.forEach(l => (l.items || []).forEach(it => {
+    const key = normName(it.name);
+    if (key && !h[key]) h[key] = { n: 1, t: Date.now(), c: it.cat || 'muu' };
+  }));
+  writeJSON('kauppalista_historia_' + user, h);
+  try { localStorage.setItem(flag, '1'); } catch(e){}
+}
+
+function suggestFor(query){
+  const h = readJSON(histKey(), {});
+  const list = findList(getActive());
+  const already = new Set((list ? list.items : []).map(i => normName(i.name)));
+  const q = normName(query);
+
+  let arr = Object.entries(h)
+    .map(([name, v]) => ({ name, n: v.n || 1, t: v.t || 0, c: v.c }))
+    .filter(x => !already.has(x.name));
+
+  if (q){
+    arr = arr.filter(x => x.name.includes(q) && x.name !== q);
+    arr.sort((a, b) =>
+      (a.name.startsWith(q) ? 0 : 1) - (b.name.startsWith(q) ? 0 : 1) ||
+      (b.n - a.n) || (b.t - a.t));
+  } else {
+    arr.sort((a, b) => (b.n - a.n) || (b.t - a.t));
+  }
+  return arr.slice(0, 8);
+}
+
+function renderSuggestions(){
+  const wrap  = document.getElementById('suggWrap');
+  const chips = document.getElementById('suggChips');
+  const label = document.getElementById('suggLabel');
+  const input = document.getElementById('itemName');
+  if (!wrap || !input) return;
+
+  const q = input.value;
+  const results = suggestFor(q);
+  if (!results.length){ wrap.classList.remove('show'); return; }
+
+  label.textContent = normName(q) ? 'Ehdotukset' : 'Usein ostetut';
+  chips.innerHTML = '';
+  results.forEach(r => {
+    const cat = (r.c && CAT_BY_ID[r.c]) ? r.c : guessCategory(r.name);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.innerHTML = `<span class="chipIcon">${CAT_BY_ID[cat].icon}</span>${r.name.toUpperCase()}`;
+    b.title = 'Lisää listalle';
+    // pointerdown ennen blur-tapahtumaa, jotta napautus ehtii rekisteröityä
+    b.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      addNamed(r.name.toUpperCase());
+    });
+    chips.appendChild(b);
+  });
+  wrap.classList.add('show');
+}
 
 // ============================
 // TILAILMOITUS
@@ -345,38 +639,31 @@ window.addEventListener('offline', refreshStatus);
 // ============================
 // VIITTEET
 // ============================
-const listsCol = (user) => collection(db, 'kauppalista', user, 'lists');
-const listRef  = (user, id) => doc(db, 'kauppalista', user, 'lists', id);
+const listsCol  = (user) => collection(db, 'kauppalista', user, 'lists');
+const listRef   = (user, id) => doc(db, 'kauppalista', user, 'lists', id);
 const legacyRef = (user) => doc(db, 'kauppalista', user);
 
 // ============================
-// PAIKALLINEN PEILI (nopea ensinäyttö)
+// PAIKALLINEN PEILI
 // ============================
-function mirrorWrite(user){
-  try { localStorage.setItem('kauppalista_mirror_' + user, JSON.stringify(states[user].lists)); } catch(e){}
-}
+function mirrorWrite(user){ writeJSON('kauppalista_mirror_' + user, states[user].lists); }
 function mirrorRead(user){
-  try {
-    const raw = localStorage.getItem('kauppalista_mirror_' + user);
-    if (raw){
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) states[user].lists = parsed;
-    }
-  } catch(e){}
+  const v = readJSON('kauppalista_mirror_' + user, null);
+  if (Array.isArray(v)) states[user].lists = v;
 }
 
 // ============================
 // KIRJOITUKSET
-// KORJAUS 1: ei isSaving-vartijaa. Jokainen muutos kirjoitetaan heti.
-// Firestore jonouttaa ja yhdistää kirjoitukset itse, joten mitään ei pudoteta.
 // ============================
 function saveList(user, list){
   const payload = {
     name: list.name || '',
     order: typeof list.order === 'number' ? list.order : 0,
-    items: (list.items || []).map(i => ({
-      id: i.id, name: i.name || '', qty: String(i.qty ?? ''), done: !!i.done
-    })),
+    items: (list.items || []).map(i => {
+      const o = { id: i.id, name: i.name || '', qty: String(i.qty ?? ''), done: !!i.done };
+      if (i.cat && CAT_BY_ID[i.cat]) o.cat = i.cat;
+      return o;
+    }),
     updatedAt: Date.now()
   };
   mirrorWrite(user);
@@ -396,20 +683,12 @@ function removeList(user, id){
 
 // ============================
 // SIIRTYMÄ VANHASTA MALLISTA
-// Vanha muoto: kauppalista/{käyttäjä} -> { json: "..." }
-// Uusi muoto:  kauppalista/{käyttäjä}/lists/{listId}
-// Vanha dokumentti säilytetään koskemattomana varmuuskopiona.
 // ============================
 async function migrateIfNeeded(user){
   let legacySnap = null;
-  try {
-    legacySnap = await getDoc(legacyRef(user));
-  } catch(e){
-    return; // offline eikä välimuistissa – yritetään ensi kerralla
-  }
+  try { legacySnap = await getDoc(legacyRef(user)); } catch(e){ return; }
   if (legacySnap.exists() && legacySnap.data().migrated) return;
 
-  // Onko uudessa mallissa jo dataa? Silloin ei kosketa mihinkään.
   try {
     const existing = await getDocs(listsCol(user));
     if (!existing.empty){
@@ -420,10 +699,14 @@ async function migrateIfNeeded(user){
     }
   } catch(e){ return; }
 
-  // Etsitään lähde: pilvi -> localStorage-varmuuskopio -> alkuperäinen localStorage
   let lists = null;
+  let legacyActive = null;
   if (legacySnap.exists() && legacySnap.data().json){
-    try { lists = (JSON.parse(legacySnap.data().json) || {}).lists || []; } catch(e){}
+    try {
+      const parsed = JSON.parse(legacySnap.data().json) || {};
+      lists = parsed.lists || [];
+      legacyActive = parsed.active || null;
+    } catch(e){}
   }
   if (!lists){
     const bkp = localStorage.getItem('kauppalista_bkp_' + user);
@@ -436,8 +719,7 @@ async function migrateIfNeeded(user){
 
   const batch = writeBatch(db);
   (lists || []).forEach((l, i) => {
-    const id = l.id || rid();
-    batch.set(listRef(user, id), {
+    batch.set(listRef(user, l.id || rid()), {
       name: l.name || '',
       order: i,
       items: (l.items || []).map(it => ({
@@ -447,13 +729,17 @@ async function migrateIfNeeded(user){
     });
   });
   batch.set(legacyRef(user), { migrated: true, migratedAt: Date.now() }, { merge: true });
-
-  try { await batch.commit(); } catch(e){ console.error('Siirtymä epäonnistui', e); }
+  try {
+    await batch.commit();
+    // Säilytetään aiemmin auki ollut lista, jottei näkymä ole tyhjä päivityksen jälkeen.
+    if (legacyActive && !active[user] && (lists || []).some(l => l.id === legacyActive)){
+      setActiveLocal(user, legacyActive);
+    }
+  } catch(e){ console.error('Siirtymä epäonnistui', e); }
 }
 
 // ============================
 // KUUNTELIJAT
-// Molempia käyttäjiä kuunnellaan, jotta yläpalkin luvut pysyvät ajan tasalla.
 // ============================
 function subscribeUser(user){
   if (unsubs[user]) return;
@@ -478,13 +764,13 @@ function subscribeUser(user){
         refreshStatus();
       }
 
-      // Piirretään uudelleen vain jos sisältö oikeasti muuttui.
       const sig = JSON.stringify(lists);
       if (sig === lastSig[user]) return;
       lastSig[user] = sig;
 
       states[user].lists = lists;
       mirrorWrite(user);
+      seedHistory(user);
       pruneActive(user);
       render();
     },
@@ -520,11 +806,17 @@ function pruneActive(user){
   }
 }
 
+function loadPrefs(){
+  hideDone      = localStorage.getItem('kauppalista_piilota_ostetut') === '1';
+  doneCollapsed = localStorage.getItem('kauppalista_ostetut_kiinni') === '1';
+}
+
 // ============================
 // KÄYTTÄJÄNVAIHTO
 // ============================
 window.switchUser = (user) => {
   if (user === currentUser || !USERS.includes(user)) return;
+  cancelEdit(true);
   currentUser = user;
   localStorage.setItem('kauppalista_user', user);
   subscribeUser(user);
@@ -537,7 +829,8 @@ function updateUserButtons(){
     const btn = document.getElementById('btn-' + u);
     if (!btn) return;
     btn.classList.toggle('active', u === currentUser);
-    const count = (states[u].lists || []).reduce((s, l) => s + (l.items ? l.items.length : 0), 0);
+    const count = (states[u].lists || []).reduce(
+      (s, l) => s + (l.items || []).filter(i => !i.done).length, 0);
     btn.innerHTML = EMOJI[u] + ' ' + u + (count > 0 ? `<span class="user-badge">${count}</span>` : '');
   });
 }
@@ -562,6 +855,7 @@ window.addList = () => {
 };
 
 window.setActive = (id) => {
+  cancelEdit(true);
   setActiveLocal(currentUser, id);
   render();
 };
@@ -569,76 +863,266 @@ window.setActive = (id) => {
 window.deleteList = (id) => {
   if (!confirm('Poistetaanko lista pysyvästi?')) return;
   states[currentUser].lists = states[currentUser].lists.filter(l => l.id !== id);
-  if (getActive() === id) setActiveLocal(currentUser, null);
+  if (getActive() === id){ cancelEdit(true); setActiveLocal(currentUser, null); }
   removeList(currentUser, id);
   render();
 };
 
-window.addItem = () => {
-  const nameEl = document.getElementById('itemName');
-  const qtyEl  = document.getElementById('itemQty');
-  const n = nameEl.value.trim().toUpperCase();
-  const q = qtyEl.value.trim() || '1';
-  if (!n) return;
+// Lisää tuote nimellä (käytetään sekä lomakkeelta että ehdotuksista)
+function addNamed(rawName, rawQty){
   const list = findList(getActive());
   if (!list) return;
-  list.items.push({ id: rid(), name: n, qty: q, done: false });
-  nameEl.value = '';
-  qtyEl.value = '1';
+  const name = String(rawName || '').trim().toUpperCase();
+  if (!name) return;
+
+  const qtyEl = document.getElementById('itemQty');
+  const fieldQty = qtyEl ? qtyEl.value.trim() : '';
+  const qty = String(rawQty ?? (fieldQty || '1'));
+  const cat = guessCategory(name);
+
+  list.items.push({ id: rid(), name, qty, done: false, cat });
+  recordHistory(name, cat);
+
+  const nameEl = document.getElementById('itemName');
+  if (nameEl) nameEl.value = '';
+  if (qtyEl) qtyEl.value = '1';
+
   saveList(currentUser, list);
   render();
+  renderSuggestions();
+}
+
+window.addItem = () => {
+  const nameEl = document.getElementById('itemName');
+  addNamed(nameEl ? nameEl.value : '');
 };
 
 window.toggle = (id) => {
+  if (editingId) return;
   const list = findList(getActive());
   if (!list) return;
   const it = list.items.find(i => i.id === id);
   if (!it) return;
   it.done = !it.done;
   saveList(currentUser, list);
-  render();
+  renderAnimated();   // tuote liukuu ostettuihin
 };
 
 window.del = (id) => {
   const list = findList(getActive());
   if (!list) return;
+  if (editingId === id) cancelEdit(true);
   const commit = () => {
     list.items = list.items.filter(i => i.id !== id);
     saveList(currentUser, list);
     render();
+    renderSuggestions();
   };
   const row = document.getElementById('item-' + id);
-  if (row){
-    row.classList.add('fadeOut');
-    setTimeout(commit, 400);
-  } else {
-    commit();
-  }
+  if (row){ row.classList.add('fadeOut'); setTimeout(commit, 400); }
+  else commit();
 };
 
 window.clearAll = () => {
   const list = findList(getActive());
   if (!list) return;
   if (!confirm('Tyhjennetäänkö koko lista?')) return;
+  cancelEdit(true);
   list.items = [];
   saveList(currentUser, list);
   render();
 };
 
 // ============================
+// MUOKKAUS
+// ============================
+window.startEdit = (id) => {
+  const list = findList(getActive());
+  if (!list) return;
+  const it = list.items.find(i => i.id === id);
+  if (!it) return;
+  editingId = id;
+  editBuf = { name: it.name || '', qty: String(it.qty ?? '1'), cat: itemCategory(it) };
+  render();
+  const el = document.querySelector('[data-editfield="name"]');
+  if (el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+};
+
+function cancelEdit(silent){
+  editingId = null;
+  editBuf = null;
+  if (!silent) render();
+}
+window.cancelEdit = () => cancelEdit(false);
+
+window.saveEdit = () => {
+  const list = findList(getActive());
+  if (!list || !editingId || !editBuf) return cancelEdit(false);
+  const it = list.items.find(i => i.id === editingId);
+  if (!it) return cancelEdit(false);
+
+  const newName = editBuf.name.trim().toUpperCase();
+  if (!newName) return;                       // tyhjää nimeä ei tallenneta
+  const oldName = it.name;
+
+  it.name = newName;
+  it.qty  = String(editBuf.qty).trim() || '1';
+  it.cat  = editBuf.cat;
+
+  // Opitaan käsin valittu kategoria seuraavaa kertaa varten
+  if (editBuf.cat !== guessCategory(newName)) learnCategory(newName, editBuf.cat);
+  if (normName(oldName) !== normName(newName)){
+    forgetHistory(oldName);
+    recordHistory(newName, editBuf.cat);
+  }
+
+  cancelEdit(true);
+  saveList(currentUser, list);
+  render();
+  renderSuggestions();
+};
+
+// ============================
+// OSTETUT
+// ============================
+window.toggleHideDone = () => {
+  hideDone = !hideDone;
+  try { localStorage.setItem('kauppalista_piilota_ostetut', hideDone ? '1' : '0'); } catch(e){}
+  renderAnimated();
+};
+
+window.toggleDoneSection = () => {
+  doneCollapsed = !doneCollapsed;
+  try { localStorage.setItem('kauppalista_ostetut_kiinni', doneCollapsed ? '1' : '0'); } catch(e){}
+  renderAnimated();
+};
+
+// ============================
 // RENDER
 // ============================
+function renderAnimated(){
+  if (!reduceMotion && document.startViewTransition){
+    try { document.startViewTransition(() => render()); return; } catch(e){}
+  }
+  render();
+}
+
+function buildEditRow(it){
+  const r = document.createElement('div');
+  r.className = 'item editing';
+  r.id = 'item-' + it.id;
+  r.onclick = (e) => e.stopPropagation();
+
+  const nameIn = document.createElement('input');
+  nameIn.type = 'text';
+  nameIn.value = editBuf.name;
+  nameIn.dataset.editfield = 'name';
+  nameIn.placeholder = 'Tuotteen nimi';
+  nameIn.oninput = () => { editBuf.name = nameIn.value; };
+  nameIn.onkeydown = (e) => { if (e.key === 'Enter') window.saveEdit(); if (e.key === 'Escape') window.cancelEdit(); };
+
+  const grid = document.createElement('div');
+  grid.className = 'editGrid';
+
+  const qtyBox = document.createElement('div');
+  qtyBox.className = 'qtyBox';
+  const qtyIn = document.createElement('input');
+  qtyIn.type = 'text';
+  qtyIn.value = editBuf.qty;
+  qtyIn.dataset.editfield = 'qty';
+  qtyIn.placeholder = 'Määrä';
+  qtyIn.oninput = () => { editBuf.qty = qtyIn.value; };
+  qtyIn.onkeydown = (e) => { if (e.key === 'Enter') window.saveEdit(); if (e.key === 'Escape') window.cancelEdit(); };
+  qtyBox.appendChild(qtyIn);
+
+  const catBox = document.createElement('div');
+  catBox.className = 'catBox';
+  const sel = document.createElement('select');
+  sel.dataset.editfield = 'cat';
+  CATEGORIES.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.id;
+    o.textContent = c.icon + '  ' + c.name;
+    if (c.id === editBuf.cat) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.onchange = () => { editBuf.cat = sel.value; };
+  catBox.appendChild(sel);
+
+  grid.append(qtyBox, catBox);
+
+  const actions = document.createElement('div');
+  actions.className = 'editActions';
+  const cancel = document.createElement('button');
+  cancel.type = 'button'; cancel.className = 'btnCancel'; cancel.textContent = 'Peruuta';
+  cancel.onclick = () => window.cancelEdit();
+  const save = document.createElement('button');
+  save.type = 'button'; save.textContent = 'Tallenna';
+  save.onclick = () => window.saveEdit();
+  actions.append(cancel, save);
+
+  r.append(nameIn, grid, actions);
+  return r;
+}
+
+function buildItemRow(it){
+  if (editingId === it.id && editBuf) return buildEditRow(it);
+
+  const r = document.createElement('div');
+  r.className = 'item' + (it.done ? ' doneState' : '');
+  r.id = 'item-' + it.id;
+  if (!reduceMotion) r.style.viewTransitionName = 'vt' + it.id;
+  r.onclick = () => window.toggle(it.id);
+
+  const nm = document.createElement('div');
+  nm.className = 'name' + (it.done ? ' done' : '');
+  nm.textContent = it.done ? '✓ ' + it.name : it.name;
+
+  const right = document.createElement('div');
+  right.className = 'rowBtns';
+
+  const qty = String(it.qty ?? '').trim();
+  if (qty){
+    const qp = document.createElement('div');
+    qp.className = 'kpl' + (it.done ? ' done' : '');
+    qp.textContent = /^\d+$/.test(qty) ? qty + ' kpl' : qty;
+    right.appendChild(qp);
+  }
+
+  const eb = document.createElement('button');
+  eb.type = 'button'; eb.className = 'edit'; eb.textContent = '✎';
+  eb.setAttribute('aria-label', 'Muokkaa tuotetta');
+  eb.onclick = e => { e.stopPropagation(); window.startEdit(it.id); };
+
+  const db2 = document.createElement('button');
+  db2.type = 'button'; db2.className = 'del'; db2.textContent = '✖';
+  db2.setAttribute('aria-label', 'Poista tuote');
+  db2.onclick = e => { e.stopPropagation(); window.del(it.id); };
+
+  right.append(eb, db2);
+  r.append(nm, right);
+  return r;
+}
+
+function catHeader(icon, text, count){
+  const h = document.createElement('div');
+  h.className = 'catHeader';
+  h.innerHTML = `<span class="catIcon">${icon}</span><span>${text}</span>` +
+                `<span class="catLine"></span><span class="catCount">${count}</span>`;
+  return h;
+}
+
 function render(){
   updateUserButtons();
   const lists = states[currentUser].lists;
   const activeId = getActive();
+
+  // --- Listat ---
   const lc = document.getElementById('listContainer');
   lc.innerHTML = '';
-
   if (!lists.length){
     lc.innerHTML = `<div class='empty-state'><div class='empty-state-icon'>📝</div><div class='empty-state-text'>Luo ensimmäinen listasi</div></div>`;
   }
-
   lists.forEach(l => {
     const r = document.createElement('div');
     r.className = 'listRow' + (activeId === l.id ? ' active' : '');
@@ -651,57 +1135,110 @@ function render(){
     const rightSide = document.createElement('div');
     rightSide.style.cssText = 'display:flex;align-items:center;gap:8px;';
 
-    if (l.items.length > 0){
+    const left = (l.items || []).filter(i => !i.done).length;
+    if (left > 0){
       const badge = document.createElement('div');
       badge.className = 'count-badge';
-      badge.textContent = l.items.length;
+      badge.textContent = left;
       rightSide.appendChild(badge);
     }
 
     const d = document.createElement('button');
-    d.className = 'delList'; d.textContent = '✖';
+    d.type = 'button'; d.className = 'delList'; d.textContent = '✖';
+    d.setAttribute('aria-label', 'Poista lista');
     d.onclick = e => { e.stopPropagation(); window.deleteList(l.id); };
     rightSide.appendChild(d);
     r.append(t, rightSide);
     lc.appendChild(r);
   });
 
+  // --- Aktiivinen lista ---
   const area = document.getElementById('activeArea');
   const list = activeId ? lists.find(l => l.id === activeId) : null;
   if (!list){ area.style.display = 'none'; return; }
-
   area.style.display = 'block';
   document.getElementById('listTitle').textContent = list.name;
 
+  const all   = list.items || [];
+  const done  = all.filter(i => i.done);
+  const todo  = all.filter(i => !i.done);
+
+  // Edistyminen
+  const pct = all.length ? Math.round(done.length / all.length * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent =
+    all.length ? `${done.length} / ${all.length} ostettu` : 'Tyhjä lista';
+
+  const hideBtn = document.getElementById('hideDoneBtn');
+  hideBtn.textContent = hideDone ? 'Näytä ostetut' : 'Piilota ostetut';
+  hideBtn.style.display = done.length ? '' : 'none';
+
+  // Tuotteet kauppajärjestyksessä
   const items = document.getElementById('items');
   items.innerHTML = '';
-  if (!list.items.length){
+
+  if (!all.length){
     items.innerHTML = `<div class='empty-state'><div class='empty-state-icon'>🛒</div><div class='empty-state-text'>Lista on tyhjä</div></div>`;
+    return;
   }
-  list.items.forEach(i => {
-    const r = document.createElement('div');
-    r.className = 'item' + (i.done ? ' doneState' : '');
-    r.id = 'item-' + i.id;
-    r.onclick = () => window.toggle(i.id);
 
-    const nm = document.createElement('div');
-    nm.className = 'name' + (i.done ? ' done' : '');
-    nm.textContent = i.done ? '✓ ' + i.name : i.name;
+  const groups = new Map();
+  todo.forEach(it => {
+    const c = itemCategory(it);
+    if (!groups.has(c)) groups.set(c, []);
+    groups.get(c).push(it);
+  });
 
-    const right = document.createElement('div');
-    right.style.cssText = 'display:flex;align-items:center;';
+  CATEGORIES.forEach(c => {
+    const group = groups.get(c.id);
+    if (!group || !group.length) return;
+    items.appendChild(catHeader(c.icon, c.name, group.length));
+    group.forEach(it => items.appendChild(buildItemRow(it)));
+  });
 
-    const qp = document.createElement('div');
-    qp.className = 'kpl' + (i.done ? ' done' : '');
-    qp.textContent = i.qty + ' kpl';
+  if (!todo.length){
+    const d = document.createElement('div');
+    d.className = 'empty-state';
+    d.innerHTML = `<div class='empty-state-icon'>🎉</div><div class='empty-state-text'>Kaikki ostettu!</div>`;
+    items.appendChild(d);
+  }
 
-    const db2 = document.createElement('button');
-    db2.className = 'del'; db2.textContent = '✖';
-    db2.onclick = e => { e.stopPropagation(); window.del(i.id); };
+  // Ostetut omaan lohkoonsa alas
+  if (done.length && !hideDone){
+    const h = catHeader('✓', 'Ostetut', done.length);
+    h.classList.add('doneHeader');
+    if (doneCollapsed) h.classList.add('collapsed');
+    h.insertAdjacentHTML('beforeend', '<span class="chev">▼</span>');
+    h.onclick = () => window.toggleDoneSection();
+    items.appendChild(h);
+    if (!doneCollapsed) done.forEach(it => items.appendChild(buildItemRow(it)));
+  }
+}
 
-    right.append(qp, db2);
-    r.append(nm, right);
-    items.append(r);
+// ============================
+// SYÖTTÖKENTÄT
+// ============================
+function wireInputs(){
+  const nameEl = document.getElementById('itemName');
+  const qtyEl  = document.getElementById('itemQty');
+  const listEl = document.getElementById('newListName');
+
+  nameEl.addEventListener('input', () => {
+    nameEl.value = nameEl.value.toUpperCase();
+    renderSuggestions();
+  });
+  nameEl.addEventListener('focus', renderSuggestions);
+  nameEl.addEventListener('blur', () => {
+    setTimeout(() => document.getElementById('suggWrap').classList.remove('show'), 150);
+  });
+  nameEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter'){ e.preventDefault(); window.addItem(); nameEl.focus(); }
+  });
+  qtyEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter'){ e.preventDefault(); window.addItem(); nameEl.focus(); }
+  });
+  listEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter'){ e.preventDefault(); window.addList(); }
   });
 }
 
@@ -710,18 +1247,19 @@ function render(){
 // ============================
 async function init(){
   loadActive();
-  USERS.forEach(mirrorRead);   // näytetään edellinen tila heti
+  loadPrefs();
+  USERS.forEach(mirrorRead);
+  wireInputs();
   render();
 
-  for (const u of USERS){
-    await migrateIfNeeded(u);
-  }
+  for (const u of USERS) await migrateIfNeeded(u);
   USERS.forEach(subscribeUser);
   ready = true;
   refreshStatus();
 }
 
 init();
+
 </script>
 
 <script>
