@@ -202,7 +202,20 @@ html{scroll-behavior:smooth;}
 #saveStatus{
   position:fixed;top:0;left:0;right:0;padding:8px;text-align:center;
   font-size:13px;font-weight:700;z-index:9999;transition:opacity 0.5s;opacity:0;
+  pointer-events:none;
 }
+
+/* Päivitysilmoitus */
+#updateBar{
+  position:fixed;left:12px;right:12px;bottom:12px;z-index:10000;
+  display:none;align-items:center;gap:12px;
+  background:rgba(20,20,30,0.96);backdrop-filter:blur(20px);
+  border:1px solid rgba(255,152,48,0.4);border-radius:16px;padding:14px 16px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.6);
+}
+#updateBar.show{display:flex;animation:slideIn 0.3s cubic-bezier(0.4,0,0.2,1);}
+#updateBar .txt{flex:1;font-size:14px;font-weight:600;color:#fff;letter-spacing:0.3px;}
+#updateBar button{padding:10px 16px;font-size:14px;border-radius:12px;flex-shrink:0;}
 </style>
 <link rel="manifest" href="/kauppalista/manifest.json">
 <meta name="theme-color" content="#ff9830">
@@ -211,6 +224,11 @@ html{scroll-behavior:smooth;}
 <body>
 
 <div id="saveStatus"></div>
+
+<div id="updateBar">
+  <div class="txt">Uusi versio on valmiina.</div>
+  <button id="updateBtn" type="button">Päivitä</button>
+</div>
 
 <div class='container'>
   <div class='header'>
@@ -257,7 +275,10 @@ html{scroll-behavior:smooth;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  doc, collection, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDswdEF9J0gsHJH6Zo_8BGZrf8DVG3FwYc",
@@ -269,188 +290,339 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+
+// KORJAUS 3: Firestoren oma offline-varasto (IndexedDB).
+// Kirjoitukset tallentuvat puhelimeen heti ja jonottuvat itsestään,
+// kunnes verkko palaa. Mitään ei enää häviä kaupassa katvealueella.
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
+
 const USERS = ['TERO', 'ISKÄ'];
+const EMOJI = { 'TERO': '🧔', 'ISKÄ': '👴' };
 
-// Tila per käyttäjä: { lists:[], active:null }
-let states = { TERO:{lists:[],active:null}, ISKÄ:{lists:[],active:null} };
+// KORJAUS 5: lista = oma dokumenttinsa -> kaksi laitetta ei kirjoita toistensa yli
+// KORJAUS 6: 'active' ei ole enää synkronoitavassa tilassa vaan pelkästään puhelimessa
+let states  = { 'TERO': { lists: [] }, 'ISKÄ': { lists: [] } };
+let active  = { 'TERO': null, 'ISKÄ': null };
+let lastSig = { 'TERO': null, 'ISKÄ': null };
+
 let currentUser = localStorage.getItem('kauppalista_user') || 'TERO';
-let isSaving = false;
-let unsubscribe = null;
+if (!USERS.includes(currentUser)) currentUser = 'TERO';
+
+const unsubs = {};
+let pendingWrites = false;
+let ready = false;
+
+const rid = () => Math.random().toString(36).slice(2, 11);
 
 // ============================
-// TALLENNUSINDIKAATTORI
+// TILAILMOITUS
 // ============================
-function showSaveStatus(msg, color){
+let statusTimer = null;
+function showStatus(msg, color, sticky){
   const el = document.getElementById('saveStatus');
   el.textContent = msg;
-  el.style.background = color || '#ff9830';
-  el.style.color = color === '#ff9830' || !color ? '#000' : 'white';
+  el.style.background = color;
+  el.style.color = (color === '#22c55e' || color === '#dc2626') ? '#fff' : '#000';
   el.style.opacity = '1';
-  setTimeout(() => el.style.opacity = '0', 2000);
+  clearTimeout(statusTimer);
+  if (!sticky) statusTimer = setTimeout(() => { el.style.opacity = '0'; }, 1800);
 }
 
-// ============================
-// FIREBASE
-// ============================
-function getDocRef(user){
-  return doc(db, 'kauppalista', user);
-}
-
-async function saveCurrentUser(){
-  if(isSaving) return;
-  isSaving = true;
-  showSaveStatus('💾 Tallennetaan...', '#f97316');
-  try {
-    localStorage.setItem('kauppalista_bkp_'+currentUser, JSON.stringify(states[currentUser]));
-    await setDoc(getDocRef(currentUser), { json: JSON.stringify(states[currentUser]) });
-    showSaveStatus('✅ Tallennettu', '#22c55e');
-  } catch(e){
-    showSaveStatus('❌ Tallennus epäonnistui', '#dc2626');
-    console.error(e);
+function refreshStatus(){
+  if (!navigator.onLine){
+    showStatus('📴 Ei verkkoa – tallennetaan puhelimeen', '#f97316', true);
+  } else if (pendingWrites){
+    showStatus('⏳ Synkronoidaan…', '#f97316', true);
+  } else if (ready){
+    showStatus('✅ Synkronoitu', '#22c55e', false);
   }
-  isSaving = false;
 }
+window.addEventListener('online',  refreshStatus);
+window.addEventListener('offline', refreshStatus);
 
-async function loadUser(user){
+// ============================
+// VIITTEET
+// ============================
+const listsCol = (user) => collection(db, 'kauppalista', user, 'lists');
+const listRef  = (user, id) => doc(db, 'kauppalista', user, 'lists', id);
+const legacyRef = (user) => doc(db, 'kauppalista', user);
+
+// ============================
+// PAIKALLINEN PEILI (nopea ensinäyttö)
+// ============================
+function mirrorWrite(user){
+  try { localStorage.setItem('kauppalista_mirror_' + user, JSON.stringify(states[user].lists)); } catch(e){}
+}
+function mirrorRead(user){
   try {
-    const snap = await getDoc(getDocRef(user));
-    if(snap.exists()){
-      states[user] = JSON.parse(snap.data().json) || {lists:[],active:null};
-    } else {
-      // Tarkista vanha localStorage
-      const bkp = localStorage.getItem('kauppalista_bkp_'+user);
-      if(bkp) try { states[user] = JSON.parse(bkp); } catch(e){ states[user]={lists:[],active:null}; }
-      // Alkuperäinen localStorage vain TERO:lle ensimmäisellä kerralla
-      if(user==='TERO' && !bkp){
-        const old = localStorage.getItem('multi_list_final');
-        if(old) try { const o=JSON.parse(old); states[user]={lists:o.lists||[],active:o.active||null}; } catch(e){}
-      }
+    const raw = localStorage.getItem('kauppalista_mirror_' + user);
+    if (raw){
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) states[user].lists = parsed;
     }
-  } catch(e){
-    const bkp = localStorage.getItem('kauppalista_bkp_'+user);
-    if(bkp) try { states[user]=JSON.parse(bkp); } catch(e2){}
-  }
+  } catch(e){}
 }
 
-function subscribeUser(user){
-  if(unsubscribe) unsubscribe();
-  unsubscribe = onSnapshot(getDocRef(user), snap => {
-    if(!snap.exists() || isSaving) return;
-    try {
-      states[user] = JSON.parse(snap.data().json) || {lists:[],active:null};
-      if(user === currentUser) render();
-    } catch(e){}
+// ============================
+// KIRJOITUKSET
+// KORJAUS 1: ei isSaving-vartijaa. Jokainen muutos kirjoitetaan heti.
+// Firestore jonouttaa ja yhdistää kirjoitukset itse, joten mitään ei pudoteta.
+// ============================
+function saveList(user, list){
+  const payload = {
+    name: list.name || '',
+    order: typeof list.order === 'number' ? list.order : 0,
+    items: (list.items || []).map(i => ({
+      id: i.id, name: i.name || '', qty: String(i.qty ?? ''), done: !!i.done
+    })),
+    updatedAt: Date.now()
+  };
+  mirrorWrite(user);
+  setDoc(listRef(user, list.id), payload).catch(err => {
+    console.error('Listan tallennus epäonnistui', err);
+    showStatus('❌ Tallennus epäonnistui', '#dc2626', false);
   });
+}
+
+function removeList(user, id){
+  mirrorWrite(user);
+  deleteDoc(listRef(user, id)).catch(err => {
+    console.error('Listan poisto epäonnistui', err);
+    showStatus('❌ Poisto epäonnistui', '#dc2626', false);
+  });
+}
+
+// ============================
+// SIIRTYMÄ VANHASTA MALLISTA
+// Vanha muoto: kauppalista/{käyttäjä} -> { json: "..." }
+// Uusi muoto:  kauppalista/{käyttäjä}/lists/{listId}
+// Vanha dokumentti säilytetään koskemattomana varmuuskopiona.
+// ============================
+async function migrateIfNeeded(user){
+  let legacySnap = null;
+  try {
+    legacySnap = await getDoc(legacyRef(user));
+  } catch(e){
+    return; // offline eikä välimuistissa – yritetään ensi kerralla
+  }
+  if (legacySnap.exists() && legacySnap.data().migrated) return;
+
+  // Onko uudessa mallissa jo dataa? Silloin ei kosketa mihinkään.
+  try {
+    const existing = await getDocs(listsCol(user));
+    if (!existing.empty){
+      if (legacySnap.exists()){
+        await setDoc(legacyRef(user), { migrated: true, migratedAt: Date.now() }, { merge: true });
+      }
+      return;
+    }
+  } catch(e){ return; }
+
+  // Etsitään lähde: pilvi -> localStorage-varmuuskopio -> alkuperäinen localStorage
+  let lists = null;
+  if (legacySnap.exists() && legacySnap.data().json){
+    try { lists = (JSON.parse(legacySnap.data().json) || {}).lists || []; } catch(e){}
+  }
+  if (!lists){
+    const bkp = localStorage.getItem('kauppalista_bkp_' + user);
+    if (bkp){ try { lists = (JSON.parse(bkp) || {}).lists || []; } catch(e){} }
+  }
+  if (!lists && user === 'TERO'){
+    const old = localStorage.getItem('multi_list_final');
+    if (old){ try { lists = (JSON.parse(old) || {}).lists || []; } catch(e){} }
+  }
+
+  const batch = writeBatch(db);
+  (lists || []).forEach((l, i) => {
+    const id = l.id || rid();
+    batch.set(listRef(user, id), {
+      name: l.name || '',
+      order: i,
+      items: (l.items || []).map(it => ({
+        id: it.id || rid(), name: it.name || '', qty: String(it.qty ?? '1'), done: !!it.done
+      })),
+      updatedAt: Date.now()
+    });
+  });
+  batch.set(legacyRef(user), { migrated: true, migratedAt: Date.now() }, { merge: true });
+
+  try { await batch.commit(); } catch(e){ console.error('Siirtymä epäonnistui', e); }
+}
+
+// ============================
+// KUUNTELIJAT
+// Molempia käyttäjiä kuunnellaan, jotta yläpalkin luvut pysyvät ajan tasalla.
+// ============================
+function subscribeUser(user){
+  if (unsubs[user]) return;
+  unsubs[user] = onSnapshot(
+    listsCol(user),
+    { includeMetadataChanges: true },
+    (snap) => {
+      const lists = [];
+      snap.forEach(d => {
+        const data = d.data() || {};
+        lists.push({
+          id: d.id,
+          name: data.name || '',
+          order: typeof data.order === 'number' ? data.order : 0,
+          items: Array.isArray(data.items) ? data.items : []
+        });
+      });
+      lists.sort((a, b) => (a.order - b.order) || a.name.localeCompare(b.name, 'fi'));
+
+      if (user === currentUser){
+        pendingWrites = snap.metadata.hasPendingWrites;
+        refreshStatus();
+      }
+
+      // Piirretään uudelleen vain jos sisältö oikeasti muuttui.
+      const sig = JSON.stringify(lists);
+      if (sig === lastSig[user]) return;
+      lastSig[user] = sig;
+
+      states[user].lists = lists;
+      mirrorWrite(user);
+      pruneActive(user);
+      render();
+    },
+    (err) => {
+      console.error('Kuuntelu katkesi', err);
+      showStatus('❌ Yhteysvirhe', '#dc2626', false);
+    }
+  );
+}
+
+// ============================
+// AKTIIVINEN LISTA – VAIN TÄSSÄ PUHELIMESSA
+// ============================
+function getActive(){ return active[currentUser]; }
+
+function setActiveLocal(user, id){
+  active[user] = id;
+  try {
+    if (id) localStorage.setItem('kauppalista_active_' + user, id);
+    else localStorage.removeItem('kauppalista_active_' + user);
+  } catch(e){}
+}
+
+function loadActive(){
+  USERS.forEach(u => {
+    try { active[u] = localStorage.getItem('kauppalista_active_' + u) || null; } catch(e){ active[u] = null; }
+  });
+}
+
+function pruneActive(user){
+  if (active[user] && !states[user].lists.some(l => l.id === active[user])){
+    setActiveLocal(user, null);
+  }
 }
 
 // ============================
 // KÄYTTÄJÄNVAIHTO
 // ============================
-window.switchUser = async (user) => {
-  if(user === currentUser) return;
+window.switchUser = (user) => {
+  if (user === currentUser || !USERS.includes(user)) return;
   currentUser = user;
   localStorage.setItem('kauppalista_user', user);
-  // Lataa käyttäjä jos ei vielä ladattu
-  if(!states[user] || states[user].lists === undefined){
-    await loadUser(user);
-  }
   subscribeUser(user);
-  updateUserButtons();
   render();
+  refreshStatus();
 };
 
 function updateUserButtons(){
   USERS.forEach(u => {
-    const btn = document.getElementById('btn-'+u);
-    if(btn){
-      btn.classList.toggle('active', u === currentUser);
-      const count = (states[u]?.lists||[]).reduce((s,l)=>s+l.items.length,0);
-      btn.innerHTML = (u==='TERO'?'🧔 ':'👴 ') + u + (count>0?`<span class="user-badge">${count}</span>`:'');
-    }
+    const btn = document.getElementById('btn-' + u);
+    if (!btn) return;
+    btn.classList.toggle('active', u === currentUser);
+    const count = (states[u].lists || []).reduce((s, l) => s + (l.items ? l.items.length : 0), 0);
+    btn.innerHTML = EMOJI[u] + ' ' + u + (count > 0 ? `<span class="user-badge">${count}</span>` : '');
   });
 }
 
 // ============================
 // LISTANHALLINTA
 // ============================
-function getState(){ return states[currentUser]; }
+function findList(id){ return states[currentUser].lists.find(l => l.id === id); }
 
-window.addList = async () => {
-  const n = document.getElementById('newListName').value.trim().toUpperCase();
-  if(!n) return;
-  const state = getState();
-  const id = Math.random().toString(36).slice(2);
-  state.lists.push({id, name:n, items:[]});
-  state.active = id;
-  document.getElementById('newListName').value = '';
+window.addList = () => {
+  const input = document.getElementById('newListName');
+  const n = input.value.trim().toUpperCase();
+  if (!n) return;
+  const lists = states[currentUser].lists;
+  const order = lists.length ? Math.max(...lists.map(l => l.order || 0)) + 1 : 0;
+  const list = { id: rid(), name: n, order, items: [] };
+  lists.push(list);
+  setActiveLocal(currentUser, list.id);
+  input.value = '';
+  saveList(currentUser, list);
   render();
-  await saveCurrentUser();
 };
 
-window.setActive = async (id) => {
-  getState().active = id;
+window.setActive = (id) => {
+  setActiveLocal(currentUser, id);
   render();
-  await saveCurrentUser();
 };
 
-window.deleteList = async (id) => {
-  if(!confirm('Poistetaanko lista pysyvästi?')) return;
-  const state = getState();
-  state.lists = state.lists.filter(l => l.id !== id);
-  if(state.active === id) state.active = null;
+window.deleteList = (id) => {
+  if (!confirm('Poistetaanko lista pysyvästi?')) return;
+  states[currentUser].lists = states[currentUser].lists.filter(l => l.id !== id);
+  if (getActive() === id) setActiveLocal(currentUser, null);
+  removeList(currentUser, id);
   render();
-  await saveCurrentUser();
 };
 
-window.addItem = async () => {
-  const n = document.getElementById('itemName').value.trim().toUpperCase();
-  const q = document.getElementById('itemQty').value.trim();
-  if(!n) return;
-  const state = getState();
-  const list = state.lists.find(l => l.id === state.active);
-  if(!list) return;
-  list.items.push({id:Math.random().toString(36).slice(2), name:n, qty:q, done:false});
-  document.getElementById('itemName').value = '';
-  document.getElementById('itemQty').value = '1';
+window.addItem = () => {
+  const nameEl = document.getElementById('itemName');
+  const qtyEl  = document.getElementById('itemQty');
+  const n = nameEl.value.trim().toUpperCase();
+  const q = qtyEl.value.trim() || '1';
+  if (!n) return;
+  const list = findList(getActive());
+  if (!list) return;
+  list.items.push({ id: rid(), name: n, qty: q, done: false });
+  nameEl.value = '';
+  qtyEl.value = '1';
+  saveList(currentUser, list);
   render();
-  await saveCurrentUser();
 };
 
-window.toggle = async (id) => {
-  const state = getState();
-  const list = state.lists.find(l => l.id === state.active);
+window.toggle = (id) => {
+  const list = findList(getActive());
+  if (!list) return;
   const it = list.items.find(i => i.id === id);
+  if (!it) return;
   it.done = !it.done;
+  saveList(currentUser, list);
   render();
-  await saveCurrentUser();
 };
 
-window.del = async (id) => {
-  const state = getState();
-  const list = state.lists.find(l => l.id === state.active);
-  const row = document.getElementById('item-'+id);
-  if(row){
-    row.classList.add('fadeOut');
-    setTimeout(async () => {
-      list.items = list.items.filter(i => i.id !== id);
-      render();
-      await saveCurrentUser();
-    }, 400);
-  } else {
+window.del = (id) => {
+  const list = findList(getActive());
+  if (!list) return;
+  const commit = () => {
     list.items = list.items.filter(i => i.id !== id);
+    saveList(currentUser, list);
     render();
-    await saveCurrentUser();
+  };
+  const row = document.getElementById('item-' + id);
+  if (row){
+    row.classList.add('fadeOut');
+    setTimeout(commit, 400);
+  } else {
+    commit();
   }
 };
 
-window.clearAll = async () => {
-  if(!confirm('Tyhjennetäänkö koko lista?')) return;
-  const state = getState();
-  const list = state.lists.find(l => l.id === state.active);
+window.clearAll = () => {
+  const list = findList(getActive());
+  if (!list) return;
+  if (!confirm('Tyhjennetäänkö koko lista?')) return;
   list.items = [];
+  saveList(currentUser, list);
   render();
-  await saveCurrentUser();
 };
 
 // ============================
@@ -458,17 +630,18 @@ window.clearAll = async () => {
 // ============================
 function render(){
   updateUserButtons();
-  const state = getState();
+  const lists = states[currentUser].lists;
+  const activeId = getActive();
   const lc = document.getElementById('listContainer');
   lc.innerHTML = '';
 
-  if(!state.lists.length){
+  if (!lists.length){
     lc.innerHTML = `<div class='empty-state'><div class='empty-state-icon'>📝</div><div class='empty-state-text'>Luo ensimmäinen listasi</div></div>`;
   }
 
-  state.lists.forEach(l => {
+  lists.forEach(l => {
     const r = document.createElement('div');
-    r.className = 'listRow' + (state.active === l.id ? ' active' : '');
+    r.className = 'listRow' + (activeId === l.id ? ' active' : '');
     r.onclick = () => window.setActive(l.id);
 
     const t = document.createElement('div');
@@ -478,7 +651,7 @@ function render(){
     const rightSide = document.createElement('div');
     rightSide.style.cssText = 'display:flex;align-items:center;gap:8px;';
 
-    if(l.items.length > 0){
+    if (l.items.length > 0){
       const badge = document.createElement('div');
       badge.className = 'count-badge';
       badge.textContent = l.items.length;
@@ -494,40 +667,39 @@ function render(){
   });
 
   const area = document.getElementById('activeArea');
-  if(!state.active){ area.style.display='none'; return; }
+  const list = activeId ? lists.find(l => l.id === activeId) : null;
+  if (!list){ area.style.display = 'none'; return; }
 
   area.style.display = 'block';
-  const list = state.lists.find(l => l.id === state.active);
-  if(!list){ area.style.display='none'; return; }
   document.getElementById('listTitle').textContent = list.name;
 
   const items = document.getElementById('items');
   items.innerHTML = '';
-  if(!list.items.length){
+  if (!list.items.length){
     items.innerHTML = `<div class='empty-state'><div class='empty-state-icon'>🛒</div><div class='empty-state-text'>Lista on tyhjä</div></div>`;
   }
   list.items.forEach(i => {
     const r = document.createElement('div');
-    r.className = 'item'+(i.done?' doneState':'');
-    r.id = 'item-'+i.id;
+    r.className = 'item' + (i.done ? ' doneState' : '');
+    r.id = 'item-' + i.id;
     r.onclick = () => window.toggle(i.id);
 
     const nm = document.createElement('div');
-    nm.className = 'name'+(i.done?' done':'');
-    nm.textContent = i.done ? '✓ '+i.name : i.name;
+    nm.className = 'name' + (i.done ? ' done' : '');
+    nm.textContent = i.done ? '✓ ' + i.name : i.name;
 
     const right = document.createElement('div');
     right.style.cssText = 'display:flex;align-items:center;';
 
     const qp = document.createElement('div');
-    qp.className = 'kpl'+(i.done?' done':'');
-    qp.textContent = i.qty+' kpl';
+    qp.className = 'kpl' + (i.done ? ' done' : '');
+    qp.textContent = i.qty + ' kpl';
 
-    const db = document.createElement('button');
-    db.className = 'del'; db.textContent = '✖';
-    db.onclick = e => { e.stopPropagation(); window.del(i.id); };
+    const db2 = document.createElement('button');
+    db2.className = 'del'; db2.textContent = '✖';
+    db2.onclick = e => { e.stopPropagation(); window.del(i.id); };
 
-    right.append(qp, db);
+    right.append(qp, db2);
     r.append(nm, right);
     items.append(r);
   });
@@ -537,18 +709,62 @@ function render(){
 // KÄYNNISTYS
 // ============================
 async function init(){
-  // Lataa molemmat käyttäjät
-  await Promise.all(USERS.map(u => loadUser(u)));
-  subscribeUser(currentUser);
-  updateUserButtons();
+  loadActive();
+  USERS.forEach(mirrorRead);   // näytetään edellinen tila heti
   render();
+
+  for (const u of USERS){
+    await migrateIfNeeded(u);
+  }
+  USERS.forEach(subscribeUser);
+  ready = true;
+  refreshStatus();
 }
 
 init();
 </script>
+
 <script>
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("/kauppalista/sw.js");
+// ============================
+// SERVICE WORKER + PÄIVITYSILMOITUS
+// ============================
+if ("serviceWorker" in navigator){
+  let reloading = false;
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloading) return;
+    reloading = true;
+    location.reload();
+  });
+
+  navigator.serviceWorker.register("/kauppalista/sw.js", { updateViaCache: "none" })
+    .then((reg) => {
+      const offerUpdate = (worker) => {
+        const bar = document.getElementById("updateBar");
+        const btn = document.getElementById("updateBtn");
+        bar.classList.add("show");
+        btn.onclick = () => {
+          btn.disabled = true;
+          worker.postMessage({ type: "SKIP_WAITING" });
+        };
+      };
+
+      if (reg.waiting && navigator.serviceWorker.controller) offerUpdate(reg.waiting);
+
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) offerUpdate(nw);
+        });
+      });
+
+      // Tarkistetaan päivitys aina kun sovellus palaa etualalle
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") reg.update().catch(() => {});
+      });
+    })
+    .catch((e) => console.error("Service workerin rekisteröinti epäonnistui", e));
 }
 </script>
 </body>
