@@ -29,7 +29,7 @@
 body{
   font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
   color:#ffffff;min-height:100vh;
-  position:relative;overflow-x:hidden;background:#0a0a0f;
+  position:relative;background:#0a0a0f;
 }
 body::before{
   content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;
@@ -295,7 +295,8 @@ html{scroll-behavior:smooth;}
 /* ---------- Pitkien nimien rivitys ---------- */
 /* Flex-elementin oletus min-width:auto estää kutistumisen, jolloin pitkä
    yhdyssana työntää napit ruudun ulkopuolelle. Nollaus + sanan katkaisu. */
-html{overflow-x:hidden;}
+/* HUOM: overflow-x:hidden rikkoisi #topbarin position:sticky -toiminnan.
+   Vaakavuoto on estetty oikeasta syystä: .name saa kutistua ja rivittyä. */
 .item{gap:10px;}
 /* break-word katkaisee sanan vasta kun se ei muuten mahdu, toisin kuin
    anywhere, joka katkoo herkästi keskeltä lyhyitäkin nimiä. */
@@ -318,8 +319,17 @@ html{overflow-x:hidden;}
 /* ============ KAKSI NÄKYMÄÄ ============ */
 #topbar{
   position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:14px;
-  padding:14px 2px 18px;
-  background:linear-gradient(180deg,#0a0a0f 0%,#0a0a0f 68%,rgba(10,10,15,0) 100%);
+  /* Reunasta reunaan, jotta palkilla ei ole näkyviä sivureunoja */
+  margin:0 -24px 20px;padding:18px 24px 18px;
+  background:transparent;
+  transition:background 0.25s ease, box-shadow 0.25s ease;
+}
+/* Tausta ilmestyy vasta kun sisältöä valuu palkin alle. Ylhäällä palkki
+   on läpinäkyvä, jolloin se ei näytä irralliselta laatikolta. */
+#topbar.kiinni{
+  background:rgba(16,16,26,0.9);
+  backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);
+  box-shadow:0 10px 30px rgba(0,0,0,0.5);
 }
 #topbar .takaisin{
   width:54px;height:54px;flex:0 0 54px;border-radius:17px;padding:0;
@@ -330,13 +340,17 @@ html{overflow-x:hidden;}
 #topbar .takaisin:hover{background:rgba(255,152,48,0.16);border-color:rgba(255,152,48,0.5);
   color:#ff9830;transform:none;box-shadow:none;}
 #topbar .takaisin:active{transform:scale(0.93);}
-#topbar .keski{flex:1;min-width:0;}
-#topbar .nimi{font-size:25px;font-weight:800;letter-spacing:1px;color:#ff9830;
-  overflow-wrap:break-word;line-height:1.15;}
-#topbar .palkki{height:5px;border-radius:99px;background:rgba(255,255,255,0.08);
-  overflow:hidden;margin-top:9px;}
-#topbar .taytto{height:100%;width:0;border-radius:99px;
+#topbar .nimi{
+  flex:1;min-width:0;font-size:26px;font-weight:800;letter-spacing:1px;color:#ff9830;
+  overflow-wrap:break-word;line-height:1.15;
+  filter:drop-shadow(0 2px 10px rgba(255,152,48,0.25));
+}
+/* Edistyminen ohuena viivana palkin alareunassa, ei erillisenä palikkana */
+#topbar .viiva{position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:rgba(255,255,255,0.07);overflow:hidden;}
+#topbar .taytto{height:100%;width:0;
   background:linear-gradient(90deg,#4ade80,#22c55e);
+  box-shadow:0 0 10px rgba(74,222,128,0.5);
   transition:width 0.45s cubic-bezier(0.4,0,0.2,1);}
 #topbar .luku{font-size:13px;font-weight:700;color:#9a9ab0;letter-spacing:1px;white-space:nowrap;}
 
@@ -419,11 +433,9 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
 <div class='container'>
   <div id='topbar'>
     <button class='takaisin' type='button' onclick='taaksepain()' aria-label='Takaisin listoihin'>&#8249;</button>
-    <div class='keski'>
-      <div class='nimi' id='topbarNimi'></div>
-      <div class='palkki'><div class='taytto' id='topbarTaytto'></div></div>
-    </div>
+    <div class='nimi' id='topbarNimi'></div>
     <div class='luku' id='topbarLuku'></div>
+    <div class='viiva'><div class='taytto' id='topbarTaytto'></div></div>
   </div>
 
   <div class='header'>
@@ -1228,7 +1240,18 @@ function paivitaTopbar(){
   document.getElementById('topbarLuku').textContent = kaikki.length ? `${ostetut} / ${kaikki.length}` : '';
   document.getElementById('topbarTaytto').style.width =
     (kaikki.length ? Math.round(ostetut / kaikki.length * 100) : 0) + '%';
+  document.querySelector('#topbar .viiva').style.display = kaikki.length ? '' : 'none';
 }
+
+// Palkin tausta ilmestyy vasta kun sisältöä on sen alla
+let palkkiKiinni = false;
+function paivitaPalkinTausta(){
+  const kiinni = window.scrollY > 6;
+  if (kiinni === palkkiKiinni) return;
+  palkkiKiinni = kiinni;
+  document.getElementById('topbar').classList.toggle('kiinni', kiinni);
+}
+window.addEventListener('scroll', paivitaPalkinTausta, { passive: true });
 
 function vaihdaNakyma(uusi, suunta){
   if (view === uusi) return;
@@ -1238,6 +1261,7 @@ function vaihdaNakyma(uusi, suunta){
     document.body.classList.remove('lisays-auki', 'luonti-auki');
     render();
     window.scrollTo(0, 0);
+    paivitaPalkinTausta();
   };
   if (reduceMotion || !document.startViewTransition){ tee(); return; }
   const juuri = document.documentElement;
