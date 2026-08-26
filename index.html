@@ -463,82 +463,327 @@ const CATEGORIES = [
 ];
 const CAT_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
 
-// Hakusanat -> kategoria. Pisin osuma voittaa, joten MAITOSUKLAA menee
-// herkkuihin eikä maitohyllyyn.
+// Hakusanat -> kategoria. Osuman pituus ja sijainti ratkaisevat; suomen
+// yhdyssanassa PÄÄSANA on lopussa (appelsiinitäys-MEHU on juoma, ei hedelmä).
 const CAT_WORDS = {
-  hevi: ['omena','banaani','appelsiini','sitruuna','lime','greippi','mandariini','päärynä',
-    'viinirypäle','rypäle','mansikka','mustikka','vadelma','puolukka','karpalo','ananas',
-    'meloni','kiivi','persikka','nektariini','luumu','taateli','avokado','tomaatti','kurkku',
-    'salaatti','paprika','porkkana','sipuli','valkosipuli','purjo','peruna','bataatti',
-    'kaali','kukkakaali','parsakaali','parsa','lanttu','nauris','punajuuri','retiisi',
-    'herne','maissi','herkkusieni','sieni','kesäkurpitsa','kurpitsa','munakoiso','inkivääri',
-    'chili','basilika','persilja','ruohosipuli','korianteri','minttu','yrtti','idut','pinaatti'],
-  leipa: ['ruisleipä','paahtoleipä','näkkileipä','pitaleipä','leipä','sämpylä','patonki',
-    'rieska','tortilla','wrap','croissant','pulla','korvapuusti','munkki','donitsi','kakku',
-    'leivos','karjalanpiirakka','piirakka','ohrarieska','hampurilaissämpylä','bagel'],
-  liha: ['jauheliha','broileri','kanafile','kana','kalkkuna','possu','porsas','nauta','härkä',
-    'pihvi','kyljys','file','ribs','grillimakkara','makkara','nakki','lenkki','pekoni','kinkku',
-    'leikkele','salami','meetvursti','maksa','lohi','kirjolohi','silakka','seiti','turska',
-    'tonnikala','katkarapu','muikku','kala','tofu','härkis','nyhtökaura','soijasuikale','falafel'],
-  maito: ['kevytmaito','rasvaton maito','täysmaito','laktoositon maito','maito','piimä',
-    'kuohukerma','ruokakerma','vispikerma','ranskankerma','smetana','kerma','jogurtti','rahka',
-    'viili','juusto','edam','emmental','cheddar','mozzarella','feta','aura','raejuusto',
-    'tuorejuusto','sulatejuusto','voi','margariini','levite','oivariini','kananmuna','muna',
-    'kaurajuoma','soijajuoma','mantelimaito','kauramaito'],
-  eines: ['eines','valmisruoka','laatikko','lasagne','keitto','sushi','wok','kebab','nuudelikuppi',
-    'pyttipannu','kaalikääryle','lihapulla','lihapyörykkä','pastasalaatti','valmissalaatti','hummus'],
-  kuiva: ['spagetti','makaroni','penne','pasta','riisi','couscous','bulgur','nuudeli',
-    'kaurahiutale','hiutale','mysli','murot','muro','cornflakes','leseet','vehnäjauho','ruisjauho',
-    'jauho','säilyke','kikherne','linssi','papu','tomaattimurska','tomaattipyre','oliiviöljy',
-    'rypsiöljy','öljy','etikka','ketsuppi','sinappi','majoneesi','soijakastike','kastike',
-    'hunaja','hillo','marmeladi','maapähkinävoi','keksipohja'],
-  mauste: ['suola','mustapippuri','pippuri','mauste','kaneli','vaniljasokeri','tomusokeri',
-    'sokeri','leivinjauhe','hiiva','ruokasooda','currykastike','curry','paprikajauhe','oregano',
-    'timjami','rosmariini','kumina','liemikuutio','fondi','vanilja','siirappi','kaakaojauhe'],
-  herkku: ['maitosuklaa','suklaa','karkki','makeinen','keksi','pipari','sipsi','perunalastu',
-    'popcorn','naksu','cashew','manteli','maapähkinä','pähkinä','lakritsi','salmiakki',
-    'purukumi','patukka','pastilli','dippi','juustonaksu','irtokarkki'],
-  juoma: ['kivennäisvesi','mineraalivesi','vesipullo','limsa','limonadi','cola','kokis','jaffa',
-    'appelsiinimehu','omenamehu','tuoremehu','mehu','suodatinkahvi','kahvi','tee','energiajuoma',
-    'urheilujuoma','smoothie','olut','siideri','lonkero','viini','vesi'],
-  pakaste: ['pakaste','jäätelö','kalapuikko','ranskalaiset','ranskanperuna','pakastemarja',
-    'lehtitaikina','voitaikina','nugetti','pizza','kermaperuna','marja'],
-  koti: ['wc-paperi','vessapaperi','talouspaperi','käsipyyhe','pyykinpesuaine','huuhteluaine',
-    'astianpesuaine','konetiskiaine','tiskiaine','tiskiharja','pesuaine','yleispuhdistusaine',
-    'siivousaine','käsisaippua','saippua','shampoo','hoitoaine','suihkusaippua','hammastahna',
-    'hammasharja','deodorantti','partavaahto','partaterä','roskapussi','jätepussi','alumiinifolio',
-    'folio','leivinpaperi','tuorekelmu','lamppu','paristo','kissanruoka','koiranruoka',
-    'kissanhiekka','vaippa','terveysside','tampooni','laastari','särkylääke','burana','panadol',
-    'nenäliina','kosteuspyyhe','talouspyyhe']
+    hevi: ['jäävuorisalaatti','kirsikkatomaatti','kuoritut perunat','bataattiperuna',
+      'granaattiomena','ruukkusalaatti','lehtisalaatti','uudet perunat','kesäkurpitsa',
+      'palsternakka','sokerimaissi','varsiselleri','herkkusieni','kiinankaali','ruohosipuli',
+      'valkosipuli','vihreä papu','viinirypäle','appelsiini','karviainen','korianteri',
+      'kukkakaali','lehtikaali','mandariini','nektariini','parsakaali','ruusukaali',
+      'sugar snap','valkokaali','aprikoosi','artisokka','härkäpapu','inkivääri','karambola',
+      'munakoiso','punajuuri','punakaali','soijapapu','basilika','bataatti','kirsikka',
+      'kurpitsa','mansikka','mustikka','persikka','persilja','pinaatti','porkkana','puolukka',
+      'salaatti','sitruuna','tomaatti','avokado','banaani','fenkoli','greippi','herukka',
+      'karpalo','papaija','paprika','päärynä','retiisi','selleri','taateli','vadelma','viikuna',
+      'ananas','kurkku','lanttu','maissi','meloni','minttu','nauris','peruna','rucola','rypäle',
+      'sipuli','chili','herne','kaali','kiivi','luumu','mango','omena','parsa','purjo','sieni',
+      'tyrni','yrtti','idut','lime'],
+    leipa: ['hampurilaissämpylä','karjalanpiirakka','hodarisämpylä','laskiaispulla',
+      'riisipiirakka','voisilmäpulla','lihapiirakka','tiikerikakku','vaalea leipä',
+      'korvapuusti','paahtoleipä','siemenleipä','suklaakakku','tumma leipä','wienerleipä',
+      'kauraleipä','näkkileipä','ohrarieska','ruisrieska','täytekakku','croissant','pitaleipä',
+      'ruisleipä','ruispalat','piirakka','tortilla','donitsi','patonki','sämpylä','leivos',
+      'munkki','rieska','bagel','kakku','leipä','pulla','wrap'],
+    liha: ['ilmakuivattu kinkku','kalkkunaleikkele','broilerinkoipi','jauhelihapihvi',
+      'grillimakkara','maksalaatikko','poronkäristys','porsaankyljys','lihapyörykkä',
+      'soijasuikale','kanasuikale','palvikinkku','graavilohi','kanankoipi','koipireisi',
+      'meetvursti','naudanliha','nyhtökaura','prosciutto','jauheliha','katkarapu','kirjolohi',
+      'mustekala','pepperoni','tonnikala','broileri','kalkkuna','kanafile','leikkele',
+      'peperoni','sardiini','savulohi','savuporo','sianliha','simpukka','anjovis','chorizo',
+      'falafel','kampela','karitsa','makkara','silakka','härkis','kinkku','kyljys','lammas',
+      'lenkki','muikku','pekoni','porsas','salami','turska','ahven','ankka','hanhi','hauki',
+      'härkä','maksa','nakki','nauta','pihvi','possu','ravut','seiti','siika','file','kala',
+      'kana','lohi','made','rapu','ribs','tofu'],
+    maito: ['turkkilainen jogurtti','maustamaton jogurtti','laktoositon maito',
+      'jäätelöjogurtti','rasvaton maito','sinihomejuusto','vaniljakastike','mantelimaito',
+      'ranskankerma','sulatejuusto','tuorejuusto','kananmunia','kaurajuoma','kauramaito',
+      'kermaviili','kevytmaito','kuohukerma','maitojuoma','margariini','mascarpone',
+      'mozzarella','ruokakerma','soijajuoma','vispikerma','camembert','kananmuna','oivariini',
+      'raejuusto','täysmaito','emmental','halloumi','jogurtti','parmesan','cheddar','munakas',
+      'ricotta','smetana','juusto','kefiri','levite','gouda','kerma','maito','piimä','rahka',
+      'viili','aura','brie','edam','feta','muna','skyr','voi'],
+    eines: ['pinaattiohukainen','tonnikalasalaatti','porkkanalaatikko','perunalaatikko',
+      'valmissalaatti','kaalilaatikko','pastasalaatti','kaalikääryle','kanasalaatti',
+      'lihapyörykkä','nuudeliannos','nuudelikuppi','valmiskeitto','hernekeitto','valmisruoka',
+      'kebabrulla','lihakeitto','pyttipannu','sosekeitto','lihapulla','ohukainen','laatikko',
+      'burrito','falafel','lasagne','hummus','keitto','eines','kebab','sushi','wok'],
+    kuiva: ['balsamiviinietikka','maapähkinäkastike','omenaviinietikka','tomaattiketsuppi',
+      'maissitärkkelys','salaatinkastike','tomaattimurska','kookoshiutale','maapähkinävoi',
+      'tortillalastu','chilikastike','kaurahiutale','mantelijauho','pastakastike',
+      'pizzakastike','riisinuudeli','soijakastike','tomaattipyre','tomaattisose','kookosmaito',
+      'korppujauho','lasagnelevy','leivinsooda','perunajauho','viinietikka','cornflakes',
+      'currytahna','kaurajauho','keksipohja','kookosöljy','oliiviöljy','pankojauho',
+      'soijarouhe','vehnäjauho','majoneesi','marmeladi','pastalevy','ruisjauho','rypsiöljy',
+      'couscous','ketsuppi','kikherne','makaroni','spagetti','sriracha','hiutale','kastike',
+      'nuudeli','sinappi','säilyke','bulgur','etikka','hunaja','leseet','linssi','hillo',
+      'jauho','murot','mysli','pasta','penne','riisi','salsa','muro','papu','taco','öljy'],
+    mauste: ['valkosipulijauhe','muskovadosokeri','sitruunapippuri','inkiväärijauhe',
+      'fariinisokeri','laakerinlehti','vaniljasokeri','currykastike','grillimauste',
+      'mustapippuri','paprikajauhe','valkopippuri','geelisokeri','hillosokeri','kaakaojauhe',
+      'leivinjauhe','liemikuutio','pizzamauste','ruokosokeri','sipulijauhe','chilijauhe',
+      'kalamauste','kanamauste','kardemumma','rosmariini','ruokasooda','tilliputki',
+      'tomusokeri','yrttisuoja','gelatiini','muskotti','neilikka','siirappi','cayenne',
+      'kurkuma','oregano','pippuri','sahrami','timjami','vanilja','kaneli','kumina','mauste',
+      'sokeri','curry','fondi','hiiva','suola'],
+    herkku: ['proteiinipatukka','hedelmäkarkki','suklaapatukka','tortillasipsi','juustonaksut',
+      'myslipatukka','vaahtokarkki','juustonaksu','maissilastu','maitosuklaa','perunalastu',
+      'irtokarkki','maapähkinä','pikkuleipä','riisikakku','suklaalevy','digestive','salmiakki',
+      'viinikumi','lakritsi','makeinen','pastilli','purukumi','manteli','marenki','patukka',
+      'popcorn','pähkinä','vohveli','cashew','karkki','nougat','pipari','suklaa','toffee',
+      'dippi','keksi','naksu','sipsi'],
+    juoma: ['alkoholiton olut','appelsiinimehu','kahvinsuodatin','proteiinijuoma',
+      'virvoitusjuoma','kivennäisvesi','mineraalivesi','sitruunasooda','suodatinkahvi',
+      'energiajuoma','urheilujuoma','kuumakaakao','kuohuviini','long drink','valkoviini',
+      'vihreä tee','kahvipapu','omenamehu','pikakahvi','punaviini','tuoremehu','vesipullo',
+      'kombucha','limonadi','smoothie','yrttitee','lonkero','rooibos','siideri','kaakao',
+      'glögi','jaffa','kahvi','kokis','limsa','rommi','tonic','vichy','viini','viski','vodka',
+      'cola','gini','mehu','olut','sima','vesi','tee'],
+    pakaste: ['broilerinugetti','herneet pakaste','pakastemansikka','pakastemustikka',
+      'pakastepinaatti','jäätelöpakkaus','pakastevadelma','pepperonipizza','jäätelöpuikko',
+      'jäätelötuutti','marjasekoitus','pakastekasvis','pakastemarjat','ranskanperuna',
+      'lehtitaikina','pakasteleipä','pakastemarja','pakastepizza','ranskalaiset','kermaperuna',
+      'lohkoperuna','sipsiperuna','kalapuikko','kalapuikot','voitaikina','kanapizza',
+      'kanugetti','jäätelö','nugetti','pakaste','marja','pizza'],
+    koti: ['talouspaperiteline','uuninpuhdistusaine','yleispuhdistusaine','pikkuhousunsuoja',
+      'tahranpoistoaine','ikkunanpesuaine','lattianpesuaine','mikrokuituliina',
+      'tekstiilihuuhde','astianpesuaine','ilmanraikastin','kurkkupastilli','kuukautissuoja',
+      'pyykinpesuaine','alumiinifolio','konetiskiaine','pumpulipuikko','suihkusaippua',
+      'aurinkorasva','huuhteluaine','hyttysmyrkky','kissanherkku','kissanhiekka','koiranherkku',
+      'kosteuspyyhe','leivinpaperi','parasetamoli','talouspaperi','wc-raikastin','d-vitamiini',
+      'deodorantti','hammasharja','hammaslanka','hammastahna','ibuprofeeni','kissanruoka',
+      'koiranruoka','kumihanskat','käsisaippua','partavaahto','siivousaine','talouspyyhe',
+      'terveysside','vessapaperi','roskapussi','särkylääke','tiskiharja','tuorekelmu',
+      'vessaharja','yskänlääke','hoitoaine','jätepussi','käsipyyhe','käsivoide','magnesium',
+      'nenäliina','partaterä','partavesi','pesuneste','pesusieni','tiskiaine','vanulappu',
+      'vitamiini','wc-paperi','ihovoide','laastari','pesuaine','tampooni','kondomi','panadol',
+      'paristo','saippua','shampoo','suuvesi','burana','lamppu','vaippa','folio','sieni'],
 };
 
-// Pisin hakusana ensin, jotta tarkin osuma voittaa.
-const CAT_INDEX = Object.entries(CAT_WORDS)
-  .flatMap(([cat, words]) => words.map(w => [w, cat]))
-  .sort((a, b) => b[0].length - a[0].length);
+// Muotosanat eivät kerro kategoriasta mitään: kinkkuSUIKALEET on kinkkua.
+const MUOTOSANAT = [
+    'suikale', 'suikaleet', 'viipale', 'viipaleet', 'pala', 'palat', 'lohko', 'lohkot', 'raaste', 'kuutio', 'kuutiot', 'siivu', 'siivut', 'rouhe', 'murut', 'annos', 'pakkaus', 'purkki', 'pussi', 'paketti', 'rasia', 'tölkki', 'pullo'
+];
 
-const normName = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+// Suomen yleisimmät taivutuspäätteet, pisin ensin.
+const PAATTEET = ['öitä','oita','eita','eja','iä','ia','ja','jä','it','et','ot','ut','t','a','ä'];
+const YKSIKOT = /\b\d+\s?(?:g|kg|ml|l|dl|cl|kpl|pkt|prk|ps|pss|tlk|x|pack)\b|\b\d+\b/gi;
 
-function guessCategory(name){
-  const n = normName(name);
-  if (!n) return 'muu';
-  const learned = readJSON('kauppalista_opitut_' + currentUser, {});
-  if (learned[n] && CAT_BY_ID[learned[n]]) return learned[n];
-  for (const [word, cat] of CAT_INDEX){ if (n.includes(word)) return cat; }
-  return 'muu';
+// ---- Nimen normalisointi ----
+function normalisoi(t){
+  return String(t || '').toLowerCase()
+    .replace(/[\u2019]/g, "'").replace(/[\u2013\u2014]/g, '-')
+    .replace(YKSIKOT, ' ')
+    .replace(/[^\wäöå\s-]/g, ' ')
+    .replace(/[\s-]+/g, ' ')
+    .trim();
+}
+// ä/ö taitetaan vertailua varten, jottei "leipa" jää löytymättä
+const taita = (t) => t.replace(/ä/g,'a').replace(/ö/g,'o').replace(/å/g,'a');
+
+// Kaksoiskirjainten kutistus osuu sekä lyöntivirheisiin että suomen
+// astevaihteluun: pepperooni -> peperoni, makkkara -> makara
+function kutista(t){
+  let ulos = '';
+  for (const ch of t) if (ch !== ulos[ulos.length - 1]) ulos += ch;
+  return ulos;
 }
 
+// Muokkausetäisyys, keskeytyy heti kun katko ylittyy
+function etaisyys(a, b, katko){
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > katko) return katko + 1;
+  let edell = new Array(lb + 1);
+  for (let j = 0; j <= lb; j++) edell[j] = j;
+  for (let i = 1; i <= la; i++){
+    const nyt = new Array(lb + 1);
+    nyt[0] = i;
+    let paras = i;
+    for (let j = 1; j <= lb; j++){
+      const hinta = a[i-1] === b[j-1] ? 0 : 1;
+      nyt[j] = Math.min(edell[j] + 1, nyt[j-1] + 1, edell[j-1] + hinta);
+      if (nyt[j] < paras) paras = nyt[j];
+    }
+    if (paras > katko) return katko + 1;
+    edell = nyt;
+  }
+  return edell[lb];
+}
+
+// Lyhyt sana vaatii tarkan osuman, pitkässä sallitaan enemmän virheitä
+const kynnys = (n) => n <= 4 ? 0 : (n <= 7 ? 1 : 2);
+
+function variantit(n){
+  const ulos = [n];
+  for (const m of MUOTOSANAT){
+    if (n.endsWith(m) && n.length > m.length + 2){ ulos.push(n.slice(0, -m.length).trim()); break; }
+  }
+  for (const v of [...ulos]){
+    for (const p of PAATTEET){
+      if (v.endsWith(p) && v.length - p.length >= 4){ ulos.push(v.slice(0, -p.length)); break; }
+    }
+  }
+  return ulos;
+}
+
+// Sanakirja esikäsitellään kerran
+const SANASTO = (() => {
+  const nahty = new Set(), ulos = [];
+  for (const [cat, sanat] of Object.entries(CAT_WORDS)){
+    for (const w of sanat){
+      const wt = taita(normalisoi(w));
+      if (wt && !nahty.has(wt)){ nahty.add(wt); ulos.push([wt, kutista(wt), cat]); }
+    }
+  }
+  return ulos;
+})();
+
+// Kevyt normalisointi historian ja oppien avaimiin
+const normName = (t) => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const arvausMuisti = new Map();   // sama nimi lasketaan vain kerran
+
+function arvaaSanakirjasta(nimi){
+  let parasP = 0, parasC = 'muu';
+  const ehdota = (p, c) => { if (p > parasP){ parasP = p; parasC = c; } };
+
+  for (const n of variantit(taita(normalisoi(nimi)))){
+    if (!n) continue;
+    const nk = kutista(n);
+
+    for (const [wt, wk, c] of SANASTO){
+      if (wt === n) ehdota(100 * wt.length + 3000, c);
+      else if (wk === nk && wk.length >= 4) ehdota(100 * wt.length + 2500, c);
+
+      const alkuI = n.lastIndexOf(wt);
+      if (alkuI !== -1){
+        const loppuI = alkuI + wt.length;
+        // Lyhyt sana kelpaa vain nimen alusta tai lopusta, muuten 'tee'
+        // löytyisi sanasta 'sateenvarjo'.
+        if (!(wt.length <= 4 && alkuI !== 0 && loppuI !== n.length)){
+          ehdota(100 * wt.length + 25 * loppuI + (loppuI === n.length ? 1200 : 0), c);
+        }
+      }
+    }
+    if (parasP >= 2500) continue;
+
+    for (const [wt, wk, c] of SANASTO){
+      const k = kynnys(wt.length);
+      if (k){
+        const d = etaisyys(wt, n, k);
+        if (d <= k) ehdota(100 * wt.length + 1000 - 300 * d, c);
+      }
+      const kk = kynnys(wk.length);
+      if (kk && wk.length >= 4){
+        const dk = etaisyys(wk, nk, kk);
+        if (dk <= kk) ehdota(100 * wk.length + 900 - 300 * dk, c);
+      }
+      // Etuliitesumeus vain taivutusmuodoille: sanan on katettava lähes koko
+      // nimi, muuten yhdyssanan alkuosa voittaisi pääsanan.
+      if (!k || wt.length < 4 || wt.length < n.length - 3) continue;
+      for (const extra of [0, 1]){
+        const pref = n.slice(0, wt.length + extra);
+        if (Math.abs(pref.length - wt.length) > k) continue;
+        const d2 = etaisyys(wt, pref, k);
+        if (d2 <= k) ehdota(100 * wt.length + 800 - 300 * d2, c);
+      }
+    }
+  }
+  return parasP ? parasC : 'muu';
+}
+
+function guessCategory(nimi){
+  const avain = opitutAvain(nimi);
+  const opittu = opitut[avain];
+  if (opittu && CAT_BY_ID[opittu.c]) return opittu.c;
+  if (arvausMuisti.has(avain)) return arvausMuisti.get(avain);
+  const tulos = arvaaSanakirjasta(nimi);
+  if (arvausMuisti.size > 500) arvausMuisti.clear();
+  arvausMuisti.set(avain, tulos);
+  return tulos;
+}
+
+// Opittu valinta voittaa tuotteeseen tallennetun kategorian, jotta TERON
+// opetus siirtyy myös ISKÄN olemassa oleville tuotteille.
 function itemCategory(it){
-  return (it.cat && CAT_BY_ID[it.cat]) ? it.cat : guessCategory(it.name);
+  const opittu = opitut[opitutAvain(it.name)];
+  if (opittu && CAT_BY_ID[opittu.c]) return opittu.c;
+  if (it.cat && CAT_BY_ID[it.cat]) return it.cat;
+  return guessCategory(it.name);
 }
 
-function learnCategory(name, cat){
-  const key = 'kauppalista_opitut_' + currentUser;
-  const learned = readJSON(key, {});
-  learned[normName(name)] = cat;
-  writeJSON(key, learned);
+// ============================================================
+//  JAETUT OPIT
+//  Yksi dokumentti kauppalista/_opitut, jonka MOLEMMAT käyttäjät lukevat
+//  ja kirjoittavat. Kun TERO opettaa, ISKÄ saa opin heti.
+// ============================================================
+let opitut = {};
+const OPITUT_PEILI = 'kauppalista_opitut_jaettu';
+const opitutRef = () => doc(db, 'kauppalista', '_opitut');
+
+function opitutAvain(nimi){
+  const n = normName(nimi).replace(/[^a-z0-9äöå]+/g, '_').replace(/^_+|_+$/g, '');
+  return n.slice(0, 120) || '_tyhja';
 }
 
+function learnCategory(nimi, cat){
+  const avain = opitutAvain(nimi);
+  if (!avain || !CAT_BY_ID[cat]) return;
+  opitut[avain] = { n: normName(nimi), c: cat, t: Date.now(), by: currentUser };
+  arvausMuisti.delete(avain);
+  writeJSON(OPITUT_PEILI, opitut);
+  setDoc(opitutRef(), { sanat: { [avain]: opitut[avain] } }, { merge: true })
+    .catch(err => console.warn('Opit eivät synkronoidu pilveen', err));
+}
+
+function unlearnCategory(nimi){
+  const avain = opitutAvain(nimi);
+  if (!opitut[avain]) return;
+  delete opitut[avain];
+  arvausMuisti.delete(avain);
+  writeJSON(OPITUT_PEILI, opitut);
+  setDoc(opitutRef(), { sanat: { [avain]: null } }, { merge: true })
+    .catch(err => console.warn('Opin poisto ei synkronoitunut', err));
+  render();
+}
+window.unlearnCategory = unlearnCategory;
+
+function subscribeOpitut(){
+  onSnapshot(opitutRef(), (snap) => {
+    const data = (snap.exists() && snap.data().sanat) ? snap.data().sanat : {};
+    const puhdas = {};
+    for (const [k, v] of Object.entries(data)){
+      if (v && typeof v === 'object' && CAT_BY_ID[v.c]) puhdas[k] = v;
+    }
+    opitut = puhdas;
+    writeJSON(OPITUT_PEILI, opitut);
+    arvausMuisti.clear();
+    render();
+  }, (err) => {
+    // Esim. puuttuva Firestore-sääntö: opit jäävät tähän puhelimeen,
+    // mutta sovellus toimii muuten normaalisti.
+    console.warn('Jaettuja oppeja ei voitu lukea, käytetään paikallisia', err);
+  });
+}
+
+// Vanhat käyttäjäkohtaiset opit siirretään kertaalleen jaettuun dokumenttiin.
+async function siirraVanhatOpit(){
+  if (localStorage.getItem('kauppalista_opit_siirretty')) return;
+  const kootut = {};
+  for (const u of USERS){
+    const vanhat = readJSON('kauppalista_opitut_' + u, {});
+    for (const [nimi, cat] of Object.entries(vanhat)){
+      if (!CAT_BY_ID[cat]) continue;
+      kootut[opitutAvain(nimi)] = { n: nimi, c: cat, t: Date.now(), by: u };
+    }
+  }
+  try { localStorage.setItem('kauppalista_opit_siirretty', '1'); } catch(e){}
+  if (!Object.keys(kootut).length) return;
+  opitut = { ...kootut, ...opitut };
+  writeJSON(OPITUT_PEILI, opitut);
+  try { await setDoc(opitutRef(), { sanat: kootut }, { merge: true }); }
+  catch(err){ console.warn('Vanhojen oppien siirto ei onnistunut', err); }
+}
 
 // ============================================================
 //  OSTOSHISTORIA (vain tässä puhelimessa)
@@ -1331,8 +1576,11 @@ async function init(){
   loadActive();
   loadPrefs();
   USERS.forEach(mirrorRead);
+  opitut = readJSON(OPITUT_PEILI, {});   // heti käyttöön, päivittyy pilvestä
   wireInputs();
   render();
+  subscribeOpitut();
+  siirraVanhatOpit();
 
   for (const u of USERS) await migrateIfNeeded(u);
   USERS.forEach(subscribeUser);
