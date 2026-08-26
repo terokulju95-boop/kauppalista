@@ -648,14 +648,33 @@ function showStatus(msg, color, sticky){
   if (!sticky) statusTimer = setTimeout(() => { el.style.opacity = '0'; }, 1800);
 }
 
+function hideStatus(){
+  const el = document.getElementById('saveStatus');
+  clearTimeout(statusTimer);
+  el.style.opacity = '0';
+}
+
+// Tilapalkki näytetään vain kun jokin on oikeasti pielessä.
+// Onnistunut tallennus on hiljainen – muuten palkki välähtäisi joka rastituksesta.
+let hitaanSynkanTimer = null;
 function refreshStatus(){
   if (!navigator.onLine){
+    clearTimeout(hitaanSynkanTimer); hitaanSynkanTimer = null;
     showStatus('📴 Ei verkkoa – tallennetaan puhelimeen', '#f97316', true);
-  } else if (pendingWrites){
-    showStatus('⏳ Synkronoidaan…', '#f97316', true);
-  } else if (ready){
-    showStatus('✅ Synkronoitu', '#22c55e', false);
+    return;
   }
+  if (pendingWrites){
+    // Ilmoitetaan vasta jos synkronointi todella takkuaa yli 2 sekuntia.
+    if (!hitaanSynkanTimer){
+      hitaanSynkanTimer = setTimeout(() => {
+        hitaanSynkanTimer = null;
+        if (pendingWrites && navigator.onLine) showStatus('⏳ Synkronoidaan…', '#f97316', true);
+      }, 2000);
+    }
+    return;
+  }
+  clearTimeout(hitaanSynkanTimer); hitaanSynkanTimer = null;
+  hideStatus();
 }
 window.addEventListener('online',  refreshStatus);
 window.addEventListener('offline', refreshStatus);
@@ -765,6 +784,17 @@ async function migrateIfNeeded(user){
 // ============================
 // KUUNTELIJAT
 // ============================
+// Vertailukelpoinen tiivistelmä listoista: sama muoto tuli data sitten
+// Firestoresta tai paikallisesta muistista.
+function listsSig(lists){
+  return JSON.stringify((lists || []).map(l => ({
+    i: l.id,
+    n: l.name || '',
+    o: typeof l.order === 'number' ? l.order : 0,
+    t: (l.items || []).map(x => [x.id, x.name || '', String(x.qty ?? ''), !!x.done, x.cat || ''])
+  })));
+}
+
 function subscribeUser(user){
   if (unsubs[user]) return;
   unsubs[user] = onSnapshot(
@@ -788,15 +818,20 @@ function subscribeUser(user){
         refreshStatus();
       }
 
-      const sig = JSON.stringify(lists);
+      const sig = listsSig(lists);
       if (sig === lastSig[user]) return;
-      lastSig[user] = sig;
 
+      // Firestore kaiuttaa oman kirjoituksemme heti takaisin. Se sisältää
+      // täsmälleen sen mitä ruudulla jo on, joten uudelleenpiirto olisi turha
+      // – ja osuisi keskelle käynnissä olevaa siirtymäanimaatiota.
+      const omaKaiku = (sig === listsSig(states[user].lists));
+
+      lastSig[user] = sig;
       states[user].lists = lists;
       mirrorWrite(user);
       seedHistory(user);
       pruneActive(user);
-      render();
+      if (!omaKaiku) render();
     },
     (err) => {
       console.error('Kuuntelu katkesi', err);
