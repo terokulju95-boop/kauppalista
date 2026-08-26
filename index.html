@@ -411,6 +411,26 @@ html.nav-eteen::view-transition-old(root),html.nav-eteen::view-transition-new(ro
 html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(root){
   mix-blend-mode:normal;}
 
+
+/* ============ RIVI ILMAN NAPPEJA ============ */
+/* Pitkä painallus vaatii, ettei selain valitse tekstiä tai avaa valikkoa */
+.item{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent;}
+.item.editing{user-select:auto;-webkit-user-select:auto;}
+.item .name{font-size:19px;}
+.kpl{font-size:14px;margin-right:2px;padding:5px 11px;}
+/* Painallus tuntuu heti, vaikka muokkaus avautuu vasta 0,5 s kuluttua */
+.item.painetaan{transform:scale(0.975);background:rgba(45,45,62,0.9);
+  border-color:rgba(255,152,48,0.45);}
+
+.vinkki{text-align:center;font-size:12px;letter-spacing:0.5px;color:#6f6f88;
+  padding:18px 10px 2px;line-height:1.5;}
+
+.btnPoista{background:rgba(255,77,77,0.14);color:#ff7a7a;
+  border:1px solid rgba(255,77,77,0.45);box-shadow:none;}
+.btnPoista:hover{background:rgba(255,77,77,0.26);color:#fff;transform:none;box-shadow:none;}
+.editActions button{padding:14px 8px;font-size:13px;letter-spacing:0.5px;}
+
 /* ---------- Liikkeen vähennys ---------- */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
@@ -1474,6 +1494,7 @@ window.startEdit = (id) => {
 };
 
 function cancelEdit(silent){
+  peruAjastin(); painallus = null;
   editingId = null;
   editBuf = null;
   if (!silent) render();
@@ -1590,16 +1611,70 @@ function buildEditRow(it){
 
   const actions = document.createElement('div');
   actions.className = 'editActions';
+  const poista = document.createElement('button');
+  poista.type = 'button'; poista.className = 'btnPoista'; poista.textContent = 'Poista';
+  poista.onclick = () => { const id = editingId; cancelEdit(true); window.del(id); };
   const cancel = document.createElement('button');
   cancel.type = 'button'; cancel.className = 'btnCancel'; cancel.textContent = 'Peruuta';
   cancel.onclick = () => window.cancelEdit();
   const save = document.createElement('button');
   save.type = 'button'; save.textContent = 'Tallenna';
   save.onclick = () => window.saveEdit();
-  actions.append(cancel, save);
+  actions.append(poista, cancel, save);
 
   r.append(nameIn, grid, actions);
   return r;
+}
+
+// Pitkä painallus: 500 ms pohjassa avaa muokkauksen, josta myös poisto.
+// Lyhyt napautus rastittaa. Erillisiä nappeja ei enää tarvita.
+const PITKA_PAINALLUS_MS = 500;
+let painallus = null;
+
+function peruAjastin(){
+  if (painallus && painallus.ajastin){ clearTimeout(painallus.ajastin); painallus.ajastin = null; }
+  if (painallus && painallus.el) painallus.el.classList.remove('painetaan');
+}
+
+function liitaPainallus(el, id){
+  el.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (editingId) return;
+    peruAjastin();
+    el.classList.add('painetaan');
+    painallus = {
+      id, el, x: e.clientX, y: e.clientY, liikkui: false, pitka: false,
+      ajastin: setTimeout(() => {
+        if (!painallus || painallus.id !== id) return;
+        painallus.pitka = true;
+        el.classList.remove('painetaan');
+        varise(18);
+        window.startEdit(id);
+      }, PITKA_PAINALLUS_MS)
+    };
+  });
+
+  el.addEventListener('pointermove', (e) => {
+    if (!painallus || painallus.id !== id) return;
+    if (Math.abs(e.clientX - painallus.x) > 10 || Math.abs(e.clientY - painallus.y) > 10){
+      painallus.liikkui = true;
+      peruAjastin();
+    }
+  });
+
+  el.addEventListener('pointerup', () => {
+    if (!painallus || painallus.id !== id) return;
+    const { liikkui, pitka } = painallus;
+    peruAjastin();
+    painallus = null;
+    // Sormen liu'utus on vieritys tai pyyhkäisy, ei napautus
+    if (!liikkui && !pitka) window.toggle(id);
+  });
+
+  const lopeta = () => { peruAjastin(); painallus = null; };
+  el.addEventListener('pointercancel', lopeta);
+  el.addEventListener('pointerleave', () => { if (painallus && painallus.id === id) peruAjastin(); });
+  el.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 function buildItemRow(it){
@@ -1608,39 +1683,27 @@ function buildItemRow(it){
   const r = document.createElement('div');
   r.className = 'item' + (it.done ? ' doneState' : '');
   r.id = 'item-' + it.id;
-  // Nimi annetaan VAIN liikkuvalle riville. Jos kaikki rivit nimetään,
-  // selain joutuu ottamaan yhtä monta erillistä tilannekuvaa kuin listalla
-  // on tuotteita, vaikka vain yksi niistä liikkuu.
   if (!reduceMotion && vtTarget === it.id) r.style.viewTransitionName = 'vt' + it.id;
-  r.onclick = () => window.toggle(it.id);
+  r.setAttribute('role', 'button');
+  r.setAttribute('aria-label', it.name + (it.done ? ', ostettu' : ''));
 
   const nm = document.createElement('div');
   nm.className = 'name' + (it.done ? ' done' : '');
   nm.textContent = it.done ? '✓ ' + it.name : it.name;
 
-  const right = document.createElement('div');
-  right.className = 'rowBtns';
+  const oikea = document.createElement('div');
+  oikea.className = 'rowBtns';
 
   const qty = String(it.qty ?? '').trim();
   if (qty){
     const qp = document.createElement('div');
     qp.className = 'kpl' + (it.done ? ' done' : '');
     qp.textContent = /^\d+$/.test(qty) ? qty + ' kpl' : qty;
-    right.appendChild(qp);
+    oikea.appendChild(qp);
   }
 
-  const eb = document.createElement('button');
-  eb.type = 'button'; eb.className = 'edit'; eb.textContent = '✎';
-  eb.setAttribute('aria-label', 'Muokkaa tuotetta');
-  eb.onclick = e => { e.stopPropagation(); window.startEdit(it.id); };
-
-  const db2 = document.createElement('button');
-  db2.type = 'button'; db2.className = 'del'; db2.textContent = '✖';
-  db2.setAttribute('aria-label', 'Poista tuote');
-  db2.onclick = e => { e.stopPropagation(); window.del(it.id); };
-
-  right.append(eb, db2);
-  r.append(nm, right);
+  r.append(nm, oikea);
+  liitaPainallus(r, it.id);
   return r;
 }
 
@@ -1749,6 +1812,10 @@ function render(){
     items.appendChild(d);
   }
 
+  const vinkki = document.createElement('div');
+  vinkki.className = 'vinkki';
+  vinkki.textContent = 'Napauta = ostettu · Paina pohjaan = muokkaa tai poista';
+
   // Ostetut omaan lohkoonsa alas
   if (done.length && !hideDone){
     const h = catHeader('✓', 'Ostetut', done.length);
@@ -1759,6 +1826,7 @@ function render(){
     items.appendChild(h);
     if (!doneCollapsed) done.forEach(it => items.appendChild(buildItemRow(it)));
   }
+  items.appendChild(vinkki);
 }
 
 // ============================
