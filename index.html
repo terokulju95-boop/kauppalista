@@ -429,6 +429,7 @@ let editingId = null;   // muokattavana oleva tuote
 let editBuf = null;     // {name, qty, cat} – säilyy vaikka näkymä piirtyisi uusiksi
 let hideDone = false;
 let doneCollapsed = false;
+let vtTarget = null;   // ainoa rivi jolle annetaan view-transition-name
 
 const rid = () => Math.random().toString(36).slice(2, 11);
 const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -964,6 +965,13 @@ window.toggle = (id) => {
   if (!it) return;
   it.done = !it.done;
   saveList(currentUser, list);
+
+  // Sama nimi on annettava sekä vanhaan että uuteen tilaan, muuten selain
+  // ei osaa yhdistää niitä ja rivi vain häipyy sen sijaan että liukuisi.
+  vtTarget = id;
+  const vanhaRivi = document.getElementById('item-' + id);
+  if (vanhaRivi && !reduceMotion) vanhaRivi.style.viewTransitionName = 'vt' + id;
+
   renderAnimated();   // tuote liukuu ostettuihin
 };
 
@@ -1061,8 +1069,20 @@ window.toggleDoneSection = () => {
 // ============================
 function renderAnimated(){
   if (!reduceMotion && document.startViewTransition){
-    try { document.startViewTransition(() => render()); return; } catch(e){}
+    try {
+      const t = document.startViewTransition(() => render());
+      const vapauta = () => {
+        vtTarget = null;
+        // Siivotaan nimi pois, ettei se jää roikkumaan seuraavaan siirtymään.
+        document.querySelectorAll('#items .item').forEach(el => {
+          if (el.style.viewTransitionName) el.style.viewTransitionName = '';
+        });
+      };
+      t.finished.then(vapauta, vapauta);
+      return;
+    } catch(e){}
   }
+  vtTarget = null;
   render();
 }
 
@@ -1130,7 +1150,10 @@ function buildItemRow(it){
   const r = document.createElement('div');
   r.className = 'item' + (it.done ? ' doneState' : '');
   r.id = 'item-' + it.id;
-  if (!reduceMotion) r.style.viewTransitionName = 'vt' + it.id;
+  // Nimi annetaan VAIN liikkuvalle riville. Jos kaikki rivit nimetään,
+  // selain joutuu ottamaan yhtä monta erillistä tilannekuvaa kuin listalla
+  // on tuotteita, vaikka vain yksi niistä liikkuu.
+  if (!reduceMotion && vtTarget === it.id) r.style.viewTransitionName = 'vt' + it.id;
   r.onclick = () => window.toggle(it.id);
 
   const nm = document.createElement('div');
