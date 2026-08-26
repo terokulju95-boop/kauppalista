@@ -314,6 +314,89 @@ html{overflow-x:hidden;}
 .catHeader > span:nth-child(2){min-width:0;overflow-wrap:break-word;}
 .item.editing input,.item.editing select{max-width:100%;}
 
+
+/* ============ KAKSI NÄKYMÄÄ ============ */
+#topbar{
+  position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:14px;
+  padding:14px 2px 18px;
+  background:linear-gradient(180deg,#0a0a0f 0%,#0a0a0f 68%,rgba(10,10,15,0) 100%);
+}
+#topbar .takaisin{
+  width:54px;height:54px;flex:0 0 54px;border-radius:17px;padding:0;
+  font-size:30px;font-weight:400;line-height:1;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);
+  color:#fff;box-shadow:none;display:flex;align-items:center;justify-content:center;
+}
+#topbar .takaisin:hover{background:rgba(255,152,48,0.16);border-color:rgba(255,152,48,0.5);
+  color:#ff9830;transform:none;box-shadow:none;}
+#topbar .takaisin:active{transform:scale(0.93);}
+#topbar .keski{flex:1;min-width:0;}
+#topbar .nimi{font-size:25px;font-weight:800;letter-spacing:1px;color:#ff9830;
+  overflow-wrap:break-word;line-height:1.15;}
+#topbar .palkki{height:5px;border-radius:99px;background:rgba(255,255,255,0.08);
+  overflow:hidden;margin-top:9px;}
+#topbar .taytto{height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#4ade80,#22c55e);
+  transition:width 0.45s cubic-bezier(0.4,0,0.2,1);}
+#topbar .luku{font-size:13px;font-weight:700;color:#9a9ab0;letter-spacing:1px;white-space:nowrap;}
+
+.isoNappi{width:100%;padding:19px;font-size:16px;}
+#uusiListaBtn{margin-top:4px;}
+#lisaaAuki{
+  background:rgba(255,152,48,0.13);color:#ff9830;
+  border:1px solid rgba(255,152,48,0.42);box-shadow:none;margin-bottom:18px;
+}
+#lisaaAuki:hover{background:rgba(255,152,48,0.22);transform:none;box-shadow:none;}
+
+/* Näkymän mukainen näkyvyys */
+body[data-view="lista"] .header,
+body[data-view="lista"] .user-switcher,
+body[data-view="lista"] #luontiKortti,
+body[data-view="lista"] #uusiListaBtn,
+body[data-view="lista"] #listContainer,
+body[data-view="lista"] .divider,
+body[data-view="lista"] .list-title-section{display:none !important;}
+
+body[data-view="listat"] #topbar,
+body[data-view="listat"] #activeArea,
+body[data-view="listat"] .divider,
+body[data-view="listat"] #lisaaAuki{display:none !important;}
+
+/* Lisäyslomake napin takana */
+body[data-view="lista"] #activeArea > .glass-card{display:none;}
+body.lisays-auki[data-view="lista"] #activeArea > .glass-card{display:block;}
+body.lisays-auki #lisaaAuki{display:none !important;}
+
+/* Listanäkymä: kevyempi otsikko, isommat listarivit */
+body[data-view="listat"] .header{padding:14px 0 18px;}
+body[data-view="listat"] h1{font-size:28px;}
+body[data-view="listat"] .subtitle{font-size:11px;letter-spacing:3px;}
+body[data-view="listat"] #luontiKortti{display:none;}
+body[data-view="listat"].luonti-auki #luontiKortti{display:block;}
+body[data-view="listat"].luonti-auki #uusiListaBtn{display:none;}
+body[data-view="listat"] .listRow{padding:22px 20px;}
+body[data-view="listat"] .listTitleText{font-size:22px;}
+.tyhjaLista{font-size:12px;font-weight:700;letter-spacing:1px;color:#5f5f75;
+  padding:4px 10px;white-space:nowrap;}
+
+/* ============ NÄKYMÄN VAIHDON LIUKU ============ */
+@keyframes navUlosVasemmalle{ to{ transform:translateX(-24%); opacity:0; } }
+@keyframes navSisaanOikealta{ from{ transform:translateX(100%); } }
+@keyframes navUlosOikealle{ to{ transform:translateX(100%); } }
+@keyframes navSisaanVasemmalta{ from{ transform:translateX(-24%); opacity:0; } }
+
+html.nav-eteen::view-transition-old(root){
+  animation:navUlosVasemmalle 0.30s cubic-bezier(0.32,0.72,0,1) both;}
+html.nav-eteen::view-transition-new(root){
+  animation:navSisaanOikealta 0.30s cubic-bezier(0.32,0.72,0,1) both;z-index:2;}
+html.nav-taakse::view-transition-old(root){
+  animation:navUlosOikealle 0.30s cubic-bezier(0.32,0.72,0,1) both;z-index:2;}
+html.nav-taakse::view-transition-new(root){
+  animation:navSisaanVasemmalta 0.30s cubic-bezier(0.32,0.72,0,1) both;}
+html.nav-eteen::view-transition-old(root),html.nav-eteen::view-transition-new(root),
+html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(root){
+  mix-blend-mode:normal;}
+
 /* ---------- Liikkeen vähennys ---------- */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
@@ -334,6 +417,15 @@ html{overflow-x:hidden;}
 </div>
 
 <div class='container'>
+  <div id='topbar'>
+    <button class='takaisin' type='button' onclick='taaksepain()' aria-label='Takaisin listoihin'>&#8249;</button>
+    <div class='keski'>
+      <div class='nimi' id='topbarNimi'></div>
+      <div class='palkki'><div class='taytto' id='topbarTaytto'></div></div>
+    </div>
+    <div class='luku' id='topbarLuku'></div>
+  </div>
+
   <div class='header'>
     <h1>Kauppalistat</h1>
     <div class='subtitle'>Älykäs ostoslista</div>
@@ -345,7 +437,7 @@ html{overflow-x:hidden;}
     <button class='user-btn' id='btn-ISKÄ' onclick='switchUser("ISKÄ")'>👴 ISKÄ</button>
   </div>
 
-  <div class='glass-card'>
+  <div class='glass-card' id='luontiKortti'>
     <div class='row'>
       <div style='flex:1;'>
         <input id='newListName' placeholder='Uuden listan nimi...' oninput='this.value=this.value.toUpperCase()'>
@@ -355,6 +447,7 @@ html{overflow-x:hidden;}
   </div>
 
   <section id='listContainer'></section>
+  <button class='isoNappi' id='uusiListaBtn' type='button' onclick='avaaLuonti()'>+ Uusi lista</button>
   <hr class='divider'>
   <section id='activeArea' style='display:none;'>
     <div class='list-title-section'>
@@ -367,6 +460,7 @@ html{overflow-x:hidden;}
         <div class='progressText' id='progressText'></div>
       </div>
     </div>
+    <button class='isoNappi' id='lisaaAuki' type='button' onclick='avaaLisays()'>+ Lisää tuote</button>
     <div class='glass-card'>
       <div class='row' style='margin-bottom:12px;'>
         <div style='flex:3;'>
@@ -1108,6 +1202,7 @@ function loadActive(){
 function pruneActive(user){
   if (active[user] && !states[user].lists.some(l => l.id === active[user])){
     setActiveLocal(user, null);
+    if (user === currentUser && view === 'lista') vaihdaNakyma('listat', 'taakse');
   }
 }
 
@@ -1115,6 +1210,98 @@ function loadPrefs(){
   hideDone      = localStorage.getItem('kauppalista_piilota_ostetut') === '1';
   doneCollapsed = localStorage.getItem('kauppalista_ostetut_kiinni') === '1';
 }
+
+
+// ============================================================
+//  KAKSI NÄKYMÄÄ: listojen valinta ja avattu lista
+//  Historia-API mukana, jotta Androidin oma takaisin-ele ja
+//  -nappi vievät listoihin eikä sulje koko sovellusta.
+// ============================================================
+let view = 'listat';
+
+function paivitaTopbar(){
+  const lista = findList(getActive());
+  if (!lista) return;
+  const kaikki = lista.items || [];
+  const ostetut = kaikki.filter(i => i.done).length;
+  document.getElementById('topbarNimi').textContent = lista.name;
+  document.getElementById('topbarLuku').textContent = kaikki.length ? `${ostetut} / ${kaikki.length}` : '';
+  document.getElementById('topbarTaytto').style.width =
+    (kaikki.length ? Math.round(ostetut / kaikki.length * 100) : 0) + '%';
+}
+
+function vaihdaNakyma(uusi, suunta){
+  if (view === uusi) return;
+  const tee = () => {
+    view = uusi;
+    document.body.dataset.view = uusi;
+    document.body.classList.remove('lisays-auki', 'luonti-auki');
+    render();
+    window.scrollTo(0, 0);
+  };
+  if (reduceMotion || !document.startViewTransition){ tee(); return; }
+  const juuri = document.documentElement;
+  juuri.classList.add(suunta === 'taakse' ? 'nav-taakse' : 'nav-eteen');
+  const siivoa = () => juuri.classList.remove('nav-eteen', 'nav-taakse');
+  try {
+    const t = document.startViewTransition(tee);
+    t.finished.then(siivoa, siivoa);
+  } catch(e){ siivoa(); tee(); }
+}
+
+function avaaLista(id){
+  setActiveLocal(currentUser, id);
+  if (view === 'lista'){ render(); return; }
+  try { history.pushState({ v: 'lista' }, ''); } catch(e){}
+  vaihdaNakyma('lista', 'eteen');
+}
+window.avaaLista = avaaLista;
+
+function taaksepain(){
+  if (view !== 'lista') return;
+  if (history.state && history.state.v === 'lista'){ history.back(); return; }
+  vaihdaNakyma('listat', 'taakse');
+}
+window.taaksepain = taaksepain;
+
+window.addEventListener('popstate', () => {
+  if (view === 'lista') vaihdaNakyma('listat', 'taakse');
+});
+
+window.avaaLisays = () => {
+  document.body.classList.add('lisays-auki');
+  const el = document.getElementById('itemName');
+  if (el) el.focus();
+};
+window.avaaLuonti = () => {
+  document.body.classList.add('luonti-auki');
+  const el = document.getElementById('newListName');
+  if (el) el.focus();
+};
+
+// ---- Pyyhkäisyeleet ----
+let ele = null;
+const varise = (ms) => { try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){} };
+
+document.addEventListener('touchstart', (e) => {
+  if (e.touches.length !== 1){ ele = null; return; }
+  const t = e.touches[0];
+  // Reunat jätetään Androidin omalle takaisin-eleelle
+  if (t.clientX < 36 || t.clientX > window.innerWidth - 36){ ele = null; return; }
+  ele = { x: t.clientX, y: t.clientY, aika: Date.now() };
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+  const alku = ele; ele = null;
+  if (!alku || editingId) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - alku.x, dy = t.clientY - alku.y;
+  if (Date.now() - alku.aika > 600) return;          // hidas veto = ei ele
+  if (Math.abs(dx) < 70) return;                      // liian lyhyt
+  if (Math.abs(dx) < Math.abs(dy) * 1.8) return;      // enemmän pysty- kuin vaakasuuntaa
+  if (dx > 0 && view === 'lista'){ varise(12); taaksepain(); }
+  else if (dx < 0 && view === 'listat' && findList(getActive())){ varise(12); avaaLista(getActive()); }
+}, { passive: true });
 
 // ============================
 // KÄYTTÄJÄNVAIHTO
@@ -1153,22 +1340,24 @@ window.addList = () => {
   const order = lists.length ? Math.max(...lists.map(l => l.order || 0)) + 1 : 0;
   const list = { id: rid(), name: n, order, items: [] };
   lists.push(list);
-  setActiveLocal(currentUser, list.id);
   input.value = '';
   saveList(currentUser, list);
-  render();
+  avaaLista(list.id);   // uusi lista aukeaa heti käyttöön
 };
 
 window.setActive = (id) => {
   cancelEdit(true);
-  setActiveLocal(currentUser, id);
-  render();
+  avaaLista(id);
 };
 
 window.deleteList = (id) => {
   if (!confirm('Poistetaanko lista pysyvästi?')) return;
   states[currentUser].lists = states[currentUser].lists.filter(l => l.id !== id);
-  if (getActive() === id){ cancelEdit(true); setActiveLocal(currentUser, null); }
+  if (getActive() === id){
+    cancelEdit(true);
+    setActiveLocal(currentUser, null);
+    if (view === 'lista') taaksepain();
+  }
   removeList(currentUser, id);
   render();
 };
@@ -1468,6 +1657,11 @@ function render(){
       badge.className = 'count-badge';
       badge.textContent = left;
       rightSide.appendChild(badge);
+    } else {
+      const tyhja = document.createElement('div');
+      tyhja.className = 'tyhjaLista';
+      tyhja.textContent = (l.items || []).length ? 'valmis' : 'tyhjä';
+      rightSide.appendChild(tyhja);
     }
 
     const d = document.createElement('button');
@@ -1485,6 +1679,7 @@ function render(){
   if (!list){ area.style.display = 'none'; return; }
   area.style.display = 'block';
   document.getElementById('listTitle').textContent = list.name;
+  paivitaTopbar();
 
   const all   = list.items || [];
   const done  = all.filter(i => i.done);
@@ -1578,6 +1773,15 @@ async function init(){
   USERS.forEach(mirrorRead);
   opitut = readJSON(OPITUT_PEILI, {});   // heti käyttöön, päivittyy pilvestä
   wireInputs();
+  // Avataan suoraan viimeksi käytetty lista, mutta jätetään historiaan
+  // paluupiste, jotta takaisin-ele vie listoihin eikä ulos sovelluksesta.
+  if (getActive()){
+    view = 'lista';
+    document.body.dataset.view = 'lista';
+    try { history.pushState({ v: 'lista' }, ''); } catch(e){}
+  } else {
+    document.body.dataset.view = 'listat';
+  }
   render();
   subscribeOpitut();
   siirraVanhatOpit();
