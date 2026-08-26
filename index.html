@@ -292,6 +292,28 @@ html{scroll-behavior:smooth;}
 .kpl{margin-right:10px;padding:5px 10px;font-size:14px;}
 .name{font-size:17px;}
 
+/* ---------- Pitkien nimien rivitys ---------- */
+/* Flex-elementin oletus min-width:auto estää kutistumisen, jolloin pitkä
+   yhdyssana työntää napit ruudun ulkopuolelle. Nollaus + sanan katkaisu. */
+html{overflow-x:hidden;}
+.item{gap:10px;}
+/* break-word katkaisee sanan vasta kun se ei muuten mahdu, toisin kuin
+   anywhere, joka katkoo herkästi keskeltä lyhyitäkin nimiä. */
+.item .name{flex:1 1 auto;min-width:0;overflow-wrap:break-word;}
+.rowBtns{flex:0 0 auto;gap:6px;}
+.kpl{white-space:nowrap;flex-shrink:0;margin-right:6px;padding:4px 8px;font-size:13px;}
+/* Tilaa nimelle: kapeampi sisennys ja hieman pienemmät napit */
+.item{padding:16px;gap:8px;}
+.edit,.del{width:36px;height:36px;}
+.listRow{gap:10px;}
+.listTitleText{min-width:0;overflow-wrap:break-word;}
+.listRow > div:last-child{flex-shrink:0;}
+.titleRow h2{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;word-break:break-word;}
+.hideBtn{flex:0 0 auto;}
+.chip{max-width:100%;overflow-wrap:break-word;text-align:left;}
+.catHeader > span:nth-child(2){min-width:0;overflow-wrap:break-word;}
+.item.editing input,.item.editing select{max-width:100%;}
+
 /* ---------- Liikkeen vähennys ---------- */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
@@ -356,7 +378,7 @@ html{scroll-behavior:smooth;}
       </div>
       <button class='btn-add' style='width:100%;' onclick='addItem()'>Lisää tuote</button>
       <div class='suggWrap' id='suggWrap'>
-        <div class='suggLabel' id='suggLabel'>Usein ostetut</div>
+        <div class='suggLabel' id='suggLabel'>Ehdotukset</div>
         <div class='suggChips' id='suggChips'></div>
       </div>
     </div>
@@ -569,15 +591,12 @@ function suggestFor(query){
     .map(([name, v]) => ({ name, n: v.n || 1, t: v.t || 0, c: v.c }))
     .filter(x => !already.has(x.name));
 
-  if (q){
-    arr = arr.filter(x => x.name.includes(q) && x.name !== q);
-    arr.sort((a, b) =>
-      (a.name.startsWith(q) ? 0 : 1) - (b.name.startsWith(q) ? 0 : 1) ||
-      (b.n - a.n) || (b.t - a.t));
-  } else {
-    arr.sort((a, b) => (b.n - a.n) || (b.t - a.t));
-  }
-  return arr.slice(0, 8);
+  if (!q) return [];
+  arr = arr.filter(x => x.name.includes(q) && x.name !== q);
+  arr.sort((a, b) =>
+    (a.name.startsWith(q) ? 0 : 1) - (b.name.startsWith(q) ? 0 : 1) ||
+    (b.n - a.n) || (b.t - a.t));
+  return arr.slice(0, 6);
 }
 
 function renderSuggestions(){
@@ -587,11 +606,16 @@ function renderSuggestions(){
   const input = document.getElementById('itemName');
   if (!wrap || !input) return;
 
-  const q = input.value;
-  const results = suggestFor(q);
-  if (!results.length){ wrap.classList.remove('show'); return; }
+  const hide = () => { wrap.classList.remove('show'); chips.innerHTML = ''; };
 
-  label.textContent = normName(q) ? 'Ehdotukset' : 'Usein ostetut';
+  // Ehdotukset näkyvät vasta kun jotain on kirjoitettu.
+  const q = input.value;
+  if (!normName(q)) return hide();
+
+  const results = suggestFor(q);
+  if (!results.length) return hide();
+
+  label.textContent = 'Ehdotukset';
   chips.innerHTML = '';
   results.forEach(r => {
     const cat = (r.c && CAT_BY_ID[r.c]) ? r.c : guessCategory(r.name);

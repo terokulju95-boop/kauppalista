@@ -3,7 +3,7 @@
 //  MUISTA: nosta APP_VERSION aina kun julkaiset uuden version.
 //  Ilman sitä puhelin ei koskaan huomaa päivitystä.
 // ============================================================
-const APP_VERSION = "2.1.0";
+const APP_VERSION = "2.1.1";
 
 const BASE        = "/kauppalista/";
 const SHELL_CACHE = "kauppalista-shell-" + APP_VERSION;
