@@ -423,9 +423,21 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
 .item.editing{user-select:auto;-webkit-user-select:auto;}
 .item .name{font-size:19px;}
 .kpl{font-size:14px;margin-right:2px;padding:5px 11px;}
-/* Painallus tuntuu heti, vaikka muokkaus avautuu vasta 0,5 s kuluttua */
+/* Painallus tuntuu heti, vaikka muokkaus avautuu vasta viiveen jalkeen.
+   Alareunan palkki tayttyy painalluksen keston mukaan, jotta pitkallakin
+   asetuksella nakee etta jotain on tapahtumassa. Kesto tulee JS:sta
+   muuttujana --painallus-kesto, joten se osuu aina asetettuun arvoon.
+   .item::before on jo varattu vasemman reunan aksentille, siksi ::after. */
 .item.painetaan{transform:scale(0.975);background:rgba(45,45,62,0.9);
   border-color:rgba(255,152,48,0.45);}
+.item.painetaan::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:3px;
+  border-radius:0 0 14px 14px;transform-origin:left center;
+  background:linear-gradient(90deg,#ff9830,#ff7a00);
+  animation:painallusEdistys var(--painallus-kesto,500ms) linear forwards;
+  pointer-events:none;
+}
+@keyframes painallusEdistys{from{transform:scaleX(0);}to{transform:scaleX(1);}}
 
 .vinkki{text-align:center;font-size:12px;letter-spacing:0.5px;color:#6f6f88;
   padding:18px 10px 2px;line-height:1.5;}
@@ -576,6 +588,25 @@ body[data-view="asetukset"] #asetukset{display:block;}
 .tyhjaOsio{font-size:13px;color:#6f6f88;padding:10px 0;font-style:italic;}
 .varipala{width:22px;height:22px;border-radius:7px;flex:0 0 22px;
   border:1px solid rgba(255,255,255,0.25);}
+
+/* ---------- Segmentoitu valinta ---------- */
+/* Kytkin riittaa kahdelle vaihtoehdolle. Useammalle tarvitaan tama:
+   vaihtoehdot samanlevyisina palkkina, valittu korostettuna. */
+.valintaRyhma{display:flex;gap:6px;width:100%;}
+.valintaNappi{
+  flex:1 1 0;min-width:0;padding:11px 4px;font-size:13px;font-weight:700;
+  letter-spacing:0.5px;border-radius:12px;box-shadow:none;
+  background:rgba(255,255,255,0.06);color:#a8a8c0;
+  border:1px solid rgba(255,255,255,0.12);
+  font-variant-numeric:tabular-nums;
+}
+.valintaNappi::before{display:none;}
+.valintaNappi:hover{background:rgba(255,255,255,0.14);color:#fff;
+  transform:none;box-shadow:none;}
+.valintaNappi:active{transform:scale(0.96);box-shadow:none;}
+.valintaNappi.valittu{background:linear-gradient(135deg,#ff9830,#ff7a00);
+  color:#000;border-color:transparent;font-weight:800;}
+.valintaNappi.valittu:hover{color:#000;background:linear-gradient(135deg,#ff9830,#ff7a00);}
 
 /* ---------- Liikkeen vähennys ---------- */
 @media (prefers-reduced-motion: reduce){
@@ -1222,7 +1253,27 @@ let synkkaVirheita = 0;
 let opitut = {};
 let omatSanat = {};        // asetuksissa lisätyt hakusanat: sana -> kategoria
 let tuntemattomat = {};    // Muut-osastoon päätyneet nimet
-let ulkoasu = { variotsikot: true, piilotaYksi: true };
+// ------------------------------------------------------------------
+//  PITKAN PAINALLUKSEN KESTO
+//  Osa jaettua ulkoasu-oliota, joten arvo tallentuu samaan Firestore-
+//  dokumenttiin kuin muutkin ulkoasuasetukset ja valittyy kaikille
+//  kayttajille ja laitteille. Ei localStoragea – se olisi laitekohtainen.
+// ------------------------------------------------------------------
+const PAINALLUS_VAIHTOEHDOT = [
+  { arvo:  500, teksti: '0,5 s' },
+  { arvo:  800, teksti: '0,8 s' },
+  { arvo: 1000, teksti: '1,0 s' },
+  { arvo: 1200, teksti: '1,2 s' }
+];
+const PAINALLUS_OLETUS = 500;
+const kelpaakoPainallus = (v) => PAINALLUS_VAIHTOEHDOT.some(o => o.arvo === v);
+
+let ulkoasu = { variotsikot: true, piilotaYksi: true, painallusMs: PAINALLUS_OLETUS };
+
+// Luetaan vasta painalluksen alkaessa, jotta muutos otetaan kayttoon heti
+// ilman etta kuuntelijoita tarvitsee kiinnittaa uudelleen.
+const painallusKesto = () =>
+  kelpaakoPainallus(ulkoasu.painallusMs) ? ulkoasu.painallusMs : PAINALLUS_OLETUS;
 let jaettuSig = { kategoriat: null, sanakirja: null, nakyva: null };
 const OPITUT_PEILI = 'kauppalista_jaettu';
 const opitutRef = () => doc(db, 'kauppalista', '_opitut');
@@ -1259,8 +1310,13 @@ function otaJaettuKayttoon(d){
   omatSanat = (d.sanakirja && typeof d.sanakirja === 'object') ? d.sanakirja : {};
   tuntemattomat = (d.tuntemattomat && typeof d.tuntemattomat === 'object') ? d.tuntemattomat : {};
   if (d.ulkoasu && typeof d.ulkoasu === 'object'){
+    // Vanha versio ei tunne painallusMs-kenttaa, ja kentta voi olla
+    // roskaa. Tuntematon arvo palautuu oletukseen sen sijaan etta
+    // painallus jaisi jumiin mahdottomaan kestoon.
     ulkoasu = { variotsikot: d.ulkoasu.variotsikot !== false,
-                piilotaYksi: d.ulkoasu.piilotaYksi !== false };
+                piilotaYksi: d.ulkoasu.piilotaYksi !== false,
+                painallusMs: kelpaakoPainallus(d.ulkoasu.painallusMs)
+                  ? d.ulkoasu.painallusMs : PAINALLUS_OLETUS };
   }
   varmistaTilat();
   // Sanaston ja kategorioiden uudelleenrakennus tyhjentää arvausvälimuistin,
@@ -1885,7 +1941,7 @@ const PIN = '3661';
 //  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
 //  pyorii eri versio kuin luulet.
 // ============================================================
-const SOVELLUS_VERSIO = '5.0.1';
+const SOVELLUS_VERSIO = '5.1.0';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
@@ -2229,6 +2285,26 @@ function nappi(teksti, luokka, toiminto){
   b.onclick = toiminto;
   return b;
 }
+// Segmentoitu valinta useammalle kuin kahdelle vaihtoehdolle.
+// vaihtoehdot: [{ arvo, teksti }], onValinta saa valitun arvon.
+function valintaRyhma(vaihtoehdot, nykyinen, onValinta){
+  const d = document.createElement('div');
+  d.className = 'valintaRyhma';
+  d.setAttribute('role', 'radiogroup');
+  for (const v of vaihtoehdot){
+    const valittu = v.arvo === nykyinen;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'valintaNappi' + (valittu ? ' valittu' : '');
+    b.textContent = v.teksti;
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', valittu ? 'true' : 'false');
+    b.onclick = () => { if (!valittu) onValinta(v.arvo); };
+    d.appendChild(b);
+  }
+  return d;
+}
+
 function kytkin(paalla, toiminto){
   const b = document.createElement('button');
   b.type = 'button';
@@ -2262,7 +2338,17 @@ function piirraAsetukset(){
       ulkoasu.piilotaYksi = !ulkoasu.piilotaYksi;
       tallennaJaettu({ ulkoasu }); piirraAsetukset(); render();
     }));
-  u.append(r1, r2);
+  const r3 = rivi(true);
+  r3.style.paddingLeft = '0';          // pysty-rivin sisennys on väripalaa varten
+  r3.append(kuvaus('Pitkän painalluksen kesto',
+    'Kuinka kauan riviä pidetään pohjassa ennen kuin muokkaus avautuu'),
+    valintaRyhma(PAINALLUS_VAIHTOEHDOT, painallusKesto(), (arvo) => {
+      ulkoasu.painallusMs = arvo;
+      tallennaJaettu({ ulkoasu });
+      varise(12);
+      piirraAsetukset();
+    }));
+  u.append(r1, r2, r3);
   sisalto.appendChild(u);
 
   // ---------- Käyttäjät ----------
@@ -2809,9 +2895,9 @@ function buildEditRow(it){
   return r;
 }
 
-// Pitkä painallus: 500 ms pohjassa avaa muokkauksen, josta myös poisto.
+// Pitkä painallus pohjassa avaa muokkauksen, josta myös poisto.
 // Lyhyt napautus rastittaa. Erillisiä nappeja ei enää tarvita.
-const PITKA_PAINALLUS_MS = 500;
+// Kesto on asetuksissa säädettävä, ks. PAINALLUS_VAIHTOEHDOT.
 let painallus = null;
 
 function peruAjastin(){
@@ -2840,6 +2926,10 @@ function liitaPainallusKerran(){
     const r = riviJa(e);
     if (!r) return;
     peruAjastin();
+    const kesto = painallusKesto();
+    // Edistymispalkin animaatio saa keston tästä, joten se osuu
+    // aina samaan hetkeen kuin ajastin.
+    r.el.style.setProperty('--painallus-kesto', kesto + 'ms');
     r.el.classList.add('painetaan');
     painallus = {
       id: r.id, el: r.el, x: e.clientX, y: e.clientY, liikkui: false, pitka: false,
@@ -2849,7 +2939,7 @@ function liitaPainallusKerran(){
         r.el.classList.remove('painetaan');
         varise(18);
         window.startEdit(r.id);
-      }, PITKA_PAINALLUS_MS)
+      }, kesto)
     };
   });
 
