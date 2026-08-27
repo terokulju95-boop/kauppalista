@@ -46,13 +46,14 @@ body::after{
 .container{position:relative;z-index:2;width:100%;max-width:450px;margin:0 auto;padding:24px;min-height:100vh;}
 .header{text-align:center;margin-bottom:30px;padding:20px 0;}
 h1{
+  pointer-events:none;
   font-size:38px;font-weight:700;letter-spacing:1px;margin-bottom:6px;
   background:linear-gradient(135deg,#ff9830 0%,#ffb366 50%,#ff9830 100%);
   background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
   background-clip:text;animation:gradient-text 3s ease infinite;
   filter:drop-shadow(0 2px 8px rgba(255,152,48,0.3));
 }
-.subtitle{color:#888;font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:400;}
+.subtitle{pointer-events:none;color:#888;font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:400;}
 
 /* Käyttäjävalinta */
 .user-switcher{
@@ -455,8 +456,11 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
 
 /* ============ ASETUKSET ============ */
 .header{position:relative;}
+/* h1 on DOM:ssa ratasnapin jälkeen ja peittää sen ilman z-indexiä,
+   jolloin vain napin ylin reuna reagoi. */
 .rataspainike{
-  position:absolute;top:8px;right:0;width:50px;height:50px;padding:0;border-radius:16px;
+  position:absolute;top:4px;right:0;width:56px;height:56px;padding:0;border-radius:17px;
+  z-index:10;
   font-size:24px;line-height:1;background:rgba(255,255,255,0.07);
   border:1px solid rgba(255,255,255,0.14);color:#c8c8d8;box-shadow:none;
   display:flex;align-items:center;justify-content:center;
@@ -529,6 +533,9 @@ body[data-view="asetukset"] #asetukset{display:block;}
 #asetusSisalto select:focus{border-color:#ff9830;}
 #asetusSisalto select option{background:#16161a;color:#fff;}
 .rivinSyotteet{display:flex;gap:10px;margin-bottom:10px;}
+/* Pitkä valikkoteksti ei saa kutistaa tekstikenttää olemattomiin */
+.rivinSyotteet.pinoa{flex-direction:column;}
+.rivinSyotteet.pinoa input,.rivinSyotteet.pinoa select{width:100%;min-width:0;}
 .rivinSyotteet .emojiKentta{flex:0 0 76px;text-align:center;text-transform:none;}
 .rivinSyotteet input:not(.emojiKentta){flex:1;min-width:0;text-transform:none;}
 #pinSyote{text-align:center;font-size:28px;letter-spacing:10px;margin-bottom:8px;}
@@ -1017,6 +1024,7 @@ let opitut = {};
 let omatSanat = {};        // asetuksissa lisätyt hakusanat: sana -> kategoria
 let tuntemattomat = {};    // Muut-osastoon päätyneet nimet
 let ulkoasu = { variotsikot: true, piilotaYksi: true };
+let jaettuSig = { kategoriat: null, sanakirja: null, nakyva: null };
 const OPITUT_PEILI = 'kauppalista_jaettu';
 const opitutRef = () => doc(db, 'kauppalista', '_opitut');
 
@@ -1056,9 +1064,19 @@ function otaJaettuKayttoon(d){
                 piilotaYksi: d.ulkoasu.piilotaYksi !== false };
   }
   varmistaTilat();
-  rakennaKategoriat();
-  rakennaSanasto();
+  // Sanaston ja kategorioiden uudelleenrakennus tyhjentää arvausvälimuistin,
+  // jolloin jokainen tuote laskettaisiin uudestaan sumealla haulla. Tehdään
+  // se vain kun data oikeasti muuttui.
+  const katSig = JSON.stringify(kategoriaAsetukset);
+  if (katSig !== jaettuSig.kategoriat){ jaettuSig.kategoriat = katSig; rakennaKategoriat(); }
+  const sanaSig = JSON.stringify(omatSanat);
+  if (sanaSig !== jaettuSig.sanakirja){ jaettuSig.sanakirja = sanaSig; rakennaSanasto(); }
   if (!USERS().includes(currentUser)) currentUser = USERS()[0];
+}
+
+// Näkyvään sisältöön vaikuttava osa jaetusta tilasta
+function nakyvaSig(){
+  return JSON.stringify([opitut, KAYTTAJAT, kategoriaAsetukset, omatSanat, ulkoasu]);
 }
 
 function opitutAvain(nimi){
@@ -1089,9 +1107,18 @@ window.unlearnCategory = unlearnCategory;
 function subscribeOpitut(){
   onSnapshot(opitutRef(), (snap) => {
     otaJaettuKayttoon(snap.exists() ? (snap.data() || {}) : {});
-    writeJSON(OPITUT_PEILI, kokoaJaettu());
     USERS().forEach(subscribeUser);
-    render();
+    // Tuntemattomien keruu kirjoittaa samaan dokumenttiin joka kerta kun
+    // lisätään outo tuote. Se ei näy listalla, joten ei piirretä turhaan.
+    const sig = nakyvaSig();
+    if (sig !== jaettuSig.nakyva){
+      jaettuSig.nakyva = sig;
+      writeJSON(OPITUT_PEILI, kokoaJaettu());   // synkroninen, vain kun tarpeen
+      render();
+      if (view === 'asetukset') piirraAsetukset();
+    } else if (view === 'asetukset'){
+      piirraAsetukset();
+    }
   }, (err) => {
     console.warn('Jaettua tilaa ei voitu lukea, käytetään paikallisia', err);
   });
@@ -1266,7 +1293,24 @@ const legacyRef = (user) => doc(db, 'kauppalista', user);
 // ============================
 // PAIKALLINEN PEILI
 // ============================
-function mirrorWrite(user){ writeJSON('kauppalista_mirror_' + user, states[user].lists); }
+// localStorage-kirjoitus on synkroninen ja jäädyttää pääsäikeen. Peili on
+// vain nopeaa ensinäyttöä varten – varsinainen offline-varasto on Firestoren
+// oma IndexedDB – joten kirjoitus voidaan koota yhteen.
+const peiliAjastimet = {};
+function mirrorWrite(user){
+  clearTimeout(peiliAjastimet[user]);
+  peiliAjastimet[user] = setTimeout(() => {
+    if (states[user]) writeJSON('kauppalista_mirror_' + user, states[user].lists);
+  }, 400);
+}
+// Sovelluksen taustalle siirtyessä kirjoitetaan heti, jottei mitään jää kesken
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'hidden') return;
+  for (const u of USERS()){
+    clearTimeout(peiliAjastimet[u]);
+    if (states[u]) writeJSON('kauppalista_mirror_' + u, states[u].lists);
+  }
+});
 function mirrorRead(user){
   const v = readJSON('kauppalista_mirror_' + user, null);
   if (Array.isArray(v)) states[user].lists = v;
@@ -1486,11 +1530,18 @@ function paivitaPalkinTausta(){
 }
 window.addEventListener('scroll', paivitaPalkinTausta, { passive: true });
 
+const NAKYMA_MUISTI = 'kauppalista_nakyma';
+function muistaNakyma(n){
+  // Asetuksia ei muisteta: sovellus ei saa aueta ratasnäkymään
+  try { localStorage.setItem(NAKYMA_MUISTI, n === 'asetukset' ? 'listat' : n); } catch(e){}
+}
+
 function vaihdaNakyma(uusi, suunta){
   if (view === uusi) return;
   const tee = () => {
     view = uusi;
     document.body.dataset.view = uusi;
+    muistaNakyma(uusi);
     document.body.classList.remove('lisays-auki', 'luonti-auki');
     render();
     if (uusi === 'asetukset'){ piirraAsetukset(); paivitaTopbar(); }
@@ -1570,10 +1621,16 @@ document.addEventListener('touchend', (e) => {
   const t = e.changedTouches[0];
   const dx = t.clientX - alku.x, dy = t.clientY - alku.y;
   if (Date.now() - alku.aika > 600) return;          // hidas veto = ei ele
-  if (Math.abs(dx) < 70) return;                      // liian lyhyt
   if (Math.abs(dx) < Math.abs(dy) * 1.8) return;      // enemmän pysty- kuin vaakasuuntaa
-  if (dx > 0 && view !== 'listat'){ varise(12); taaksepain(); }
-  else if (dx < 0 && view === 'listat' && findList(getActive())){ varise(12); avaaLista(getActive()); }
+  if (dx > 0 && view !== 'listat'){
+    if (dx < 70) return;
+    varise(12); taaksepain();
+  } else if (dx < 0 && view === 'listat' && findList(getActive())){
+    // Listan avaaminen vaatii selvästi tarkoituksellisemman vedon kuin
+    // takaisin palaaminen, jottei lista aukea vahingossa selatessa.
+    if (dx > -110 || Math.abs(dx) < Math.abs(dy) * 3) return;
+    varise(12); avaaLista(getActive());
+  }
 }, { passive: true });
 
 // ============================
@@ -1806,11 +1863,12 @@ function piirraAsetukset(){
   sk.insertAdjacentHTML('beforeend',
     `<p class='asetusTeksti'>Lisää hakusana ja sen osasto. Sana löytyy myös yhdyssanan osana, esimerkiksi "pepperoni" tunnistaa myös pepperonipizzan.</p>`);
   const skSyote = document.createElement('div');
-  skSyote.className = 'rivinSyotteet';
-  skSyote.innerHTML = `<input id='uusiSana' placeholder='Hakusana'>`;
+  skSyote.className = 'rivinSyotteet pinoa';
+  skSyote.innerHTML = `<input id='uusiSana' placeholder='Hakusana, esim. pepperoni'>`;
   const skSel = document.createElement('select');
   skSel.id = 'uusiSanaKat';
-  skSel.style.flex = '0 0 140px';
+  skSel.style.flex = '1 1 100%';
+  skSel.style.minWidth = '0';
   skSel.innerHTML = CATEGORIES.filter(c => c.id !== 'muu')
     .map(c => `<option value='${c.id}'>${c.icon} ${c.name}</option>`).join('');
   skSyote.appendChild(skSel);
@@ -2252,45 +2310,64 @@ function peruAjastin(){
   if (painallus && painallus.el) painallus.el.classList.remove('painetaan');
 }
 
-function liitaPainallus(el, id){
-  el.addEventListener('pointerdown', (e) => {
+// Kuuntelijat kiinnitetään KERRAN säiliöön, ei jokaiseen riviin erikseen.
+// 65 tuotteen listalla rivikohtainen kiinnitys tarkoitti lähes 400
+// addEventListener-kutsua joka ainoalla piirrolla.
+function liitaPainallusKerran(){
+  const sailio = document.getElementById('items');
+  if (!sailio || sailio.dataset.painallusKiinni) return;
+  sailio.dataset.painallusKiinni = '1';
+
+  const riviJa = (e) => {
+    const el = e.target.closest ? e.target.closest('.item') : null;
+    if (!el || el.classList.contains('editing')) return null;
+    const id = el.id.replace('item-', '');
+    return id ? { el, id } : null;
+  };
+
+  sailio.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (editingId) return;
+    const r = riviJa(e);
+    if (!r) return;
     peruAjastin();
-    el.classList.add('painetaan');
+    r.el.classList.add('painetaan');
     painallus = {
-      id, el, x: e.clientX, y: e.clientY, liikkui: false, pitka: false,
+      id: r.id, el: r.el, x: e.clientX, y: e.clientY, liikkui: false, pitka: false,
       ajastin: setTimeout(() => {
-        if (!painallus || painallus.id !== id) return;
+        if (!painallus || painallus.id !== r.id) return;
         painallus.pitka = true;
-        el.classList.remove('painetaan');
+        r.el.classList.remove('painetaan');
         varise(18);
-        window.startEdit(id);
+        window.startEdit(r.id);
       }, PITKA_PAINALLUS_MS)
     };
   });
 
-  el.addEventListener('pointermove', (e) => {
-    if (!painallus || painallus.id !== id) return;
+  sailio.addEventListener('pointermove', (e) => {
+    if (!painallus) return;
     if (Math.abs(e.clientX - painallus.x) > 10 || Math.abs(e.clientY - painallus.y) > 10){
       painallus.liikkui = true;
       peruAjastin();
     }
   });
 
-  el.addEventListener('pointerup', () => {
-    if (!painallus || painallus.id !== id) return;
-    const { liikkui, pitka } = painallus;
+  sailio.addEventListener('pointerup', (e) => {
+    if (!painallus) return;
+    const r = riviJa(e);
+    const { liikkui, pitka, id } = painallus;
     peruAjastin();
     painallus = null;
     // Sormen liu'utus on vieritys tai pyyhkäisy, ei napautus
-    if (!liikkui && !pitka) window.toggle(id);
+    if (!liikkui && !pitka && r && r.id === id) window.toggle(id);
   });
 
   const lopeta = () => { peruAjastin(); painallus = null; };
-  el.addEventListener('pointercancel', lopeta);
-  el.addEventListener('pointerleave', () => { if (painallus && painallus.id === id) peruAjastin(); });
-  el.addEventListener('contextmenu', (e) => e.preventDefault());
+  sailio.addEventListener('pointercancel', lopeta);
+  sailio.addEventListener('pointerleave', lopeta);
+  sailio.addEventListener('contextmenu', (e) => {
+    if (e.target.closest && e.target.closest('.item')) e.preventDefault();
+  });
 }
 
 function buildItemRow(it){
@@ -2321,7 +2398,6 @@ function buildItemRow(it){
   }
 
   r.append(nm, oikea);
-  liitaPainallus(r, it.id);
   return r;
 }
 
@@ -2457,6 +2533,7 @@ function render(){
 // SYÖTTÖKENTÄT
 // ============================
 function wireInputs(){
+  liitaPainallusKerran();
   const nameEl = document.getElementById('itemName');
   const qtyEl  = document.getElementById('itemQty');
   const listEl = document.getElementById('newListName');
@@ -2491,7 +2568,10 @@ async function init(){
   wireInputs();
   // Avataan suoraan viimeksi käytetty lista, mutta jätetään historiaan
   // paluupiste, jotta takaisin-ele vie listoihin eikä ulos sovelluksesta.
-  if (getActive()){
+  // Avataan lista vain jos sovellus oli listanäkymässä kun se suljettiin
+  let muistettu = 'listat';
+  try { muistettu = localStorage.getItem(NAKYMA_MUISTI) || 'listat'; } catch(e){}
+  if (muistettu === 'lista' && getActive()){
     view = 'lista';
     document.body.dataset.view = 'lista';
     try { history.pushState({ v: 'lista' }, ''); } catch(e){}
@@ -2506,7 +2586,7 @@ async function init(){
   USERS().forEach(subscribeUser);
   // Siirtymä voi palauttaa aiemmin auki olleen listan vasta tässä vaiheessa,
   // joten näkymä ja piirto päivitetään sen jälkeen.
-  if (view === 'listat' && getActive()){
+  if (view === 'listat' && muistettu === 'lista' && getActive()){
     view = 'lista';
     document.body.dataset.view = 'lista';
     try { history.pushState({ v: 'lista' }, ''); } catch(e){}
