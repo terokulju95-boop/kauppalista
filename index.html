@@ -438,10 +438,10 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
   border:2px solid rgba(255,255,255,0.1);border-radius:14px;
   background:rgba(30,30,40,0.8);overflow:hidden;}
 .maaraSaadin input{border:0;border-radius:0;background:transparent;text-align:center;
-  width:56px;flex:0 0 56px;padding:14px 2px;font-size:17px;}
+  width:50px;flex:0 0 50px;padding:14px 2px;font-size:17px;}
 .maaraSaadin input:focus{box-shadow:none;transform:none;background:rgba(255,152,48,0.08);}
 .maaraNappi{
-  flex:0 0 48px;width:48px;padding:0;border-radius:0;border:0;
+  flex:0 0 46px;width:46px;padding:0;border-radius:0;border:0;
   background:rgba(255,255,255,0.06);color:#ff9830;
   font-size:26px;font-weight:700;line-height:1;box-shadow:none;
   display:flex;align-items:center;justify-content:center;
@@ -449,6 +449,16 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
 .maaraNappi:hover{background:rgba(255,152,48,0.2);transform:none;box-shadow:none;}
 .maaraNappi:active{background:rgba(255,152,48,0.35);transform:none;}
 .maaraNappi::before{display:none;}
+.btn-add{white-space:nowrap;}
+/* Lisäysnappi kevyemmäksi, jotta teksti mahtuu säätimen viereen */
+.lisaysRivi{align-items:stretch;}
+.lisaysRivi .btn-add{font-size:15px;letter-spacing:0.5px;padding:14px 12px;}
+/* Kapealla ruudulla nappi siirtyy omalle rivilleen */
+@media (max-width: 380px){
+  .lisaysRivi{flex-wrap:wrap;}
+  .lisaysRivi .maaraSaadin{flex:0 0 auto;}
+  .lisaysRivi .btn-add{flex:1 1 100% !important;}
+}
 .item.editing .maaraSaadin{flex:1 1 auto;}
 .item.editing .maaraSaadin input{flex:1 1 auto;width:auto;padding:12px 2px;}
 .item.editing .maaraNappi{flex:0 0 44px;width:44px;font-size:24px;}
@@ -620,17 +630,16 @@ body[data-view="asetukset"] #asetukset{display:block;}
     </div>
     <button class='isoNappi' id='lisaaAuki' type='button' onclick='avaaLisays()'>+ Lisää tuote</button>
     <div class='glass-card'>
-      <div class='row' style='margin-bottom:12px;'>
-        <div style='flex:1;min-width:0;'>
-          <input id='itemName' placeholder='Tuote...' autocomplete='off'>
-        </div>
+      <!-- Tuotteen nimi saa koko leveyden: määräsäädin vei siitä liikaa -->
+      <input id='itemName' placeholder='Tuote...' autocomplete='off' style='margin-bottom:12px;'>
+      <div class='row lisaysRivi'>
         <div class='maaraSaadin'>
           <button type='button' class='maaraNappi' onclick='saadaMaara(-1)' aria-label='Vähennä'>&minus;</button>
           <input id='itemQty' value='1' inputmode='numeric' pattern='[0-9]*'>
           <button type='button' class='maaraNappi' onclick='saadaMaara(1)' aria-label='Lisää'>+</button>
         </div>
+        <button class='btn-add' style='flex:1;min-width:0;' onclick='addItem()'>Lisää tuote</button>
       </div>
-      <button class='btn-add' style='width:100%;' onclick='addItem()'>Lisää tuote</button>
       <div class='suggWrap' id='suggWrap'>
         <div class='suggLabel' id='suggLabel'>Ehdotukset</div>
         <div class='suggChips' id='suggChips'></div>
