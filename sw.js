@@ -2,8 +2,11 @@
 //  Kauppalista – Service Worker
 //  MUISTA: nosta APP_VERSION aina kun julkaiset uuden version.
 //  Ilman sitä puhelin ei koskaan huomaa päivitystä.
+//
+//  Nosta SAMALLA index.html:n SOVELLUS_VERSIO samaan lukuun.
+//  Asetusten kehittäjätila vertaa näitä ja huomauttaa jos ne eroavat.
 // ============================================================
-const APP_VERSION = "4.0.2";
+const APP_VERSION = "5.0.0";
 
 const BASE        = "/kauppalista/";
 const SHELL_CACHE = "kauppalista-shell-" + APP_VERSION;
@@ -35,7 +38,20 @@ self.addEventListener("install", (event) => {
 
 // Sovellus pyytää uutta versiota käyttöön
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+  const d = event.data || {};
+  if (d.type === "SKIP_WAITING") self.skipWaiting();
+
+  // Kehittäjätila kysyy mikä versio tässä puhelimessa oikeasti pyörii.
+  // Vastaus menee MessageChannel-portin kautta suoraan kysyjälle,
+  // ei broadcastina kaikille välilehdille.
+  if (d.type === "VERSIO" && event.ports && event.ports[0]){
+    event.ports[0].postMessage({
+      versio: APP_VERSION,
+      shell:  SHELL_CACHE,
+      lib:    LIB_CACHE,
+      aikakatkaisu: NETWORK_TIMEOUT
+    });
+  }
 });
 
 // ---------- AKTIVOINTI ----------

@@ -726,19 +726,28 @@ function writeJSON(key, value){
 //  Vaihda rivien järjestystä jos oma kauppasi on eri mallinen.
 // ============================================================
 const PERUSKATEGORIAT = [
-  { id:'hevi',    name:'Hedelmät ja vihannekset', icon:'🥬', color:'#4ade80' },
-  { id:'leipa',   name:'Leipä ja leivonnaiset',   icon:'🍞', color:'#e0a066' },
-  { id:'liha',    name:'Liha ja kala',            icon:'🥩', color:'#ff7b72' },
-  { id:'maito',   name:'Maito, juusto ja munat',  icon:'🥛', color:'#7dd3fc' },
-  { id:'eines',   name:'Einekset ja valmisruoat', icon:'🍱', color:'#fbbf24' },
-  { id:'kuiva',   name:'Kuivatuotteet',           icon:'🍝', color:'#d7be8b' },
-  { id:'mauste',  name:'Mausteet ja leivonta',    icon:'🧂', color:'#c4a0fc' },
-  { id:'herkku',  name:'Herkut ja naposteltavat', icon:'🍫', color:'#f49ac2' },
-  { id:'juoma',   name:'Juomat',                  icon:'🧃', color:'#38bdf8' },
-  { id:'pakaste', name:'Pakasteet',               icon:'🧊', color:'#a5b4fc' },
-  { id:'koti',    name:'Koti ja hygienia',        icon:'🧻', color:'#a3b2c2' },
-  { id:'muu',     name:'Muut',                    icon:'📦', color:'#9494ac' }
+  { id:'hevi',     name:'Hedelmät ja vihannekset', icon:'🥬', color:'#4ade80' },
+  { id:'leipa',    name:'Leipä ja leivonnaiset',   icon:'🍞', color:'#e0a066' },
+  { id:'liha',     name:'Liha ja kala',            icon:'🥩', color:'#ff7b72' },
+  { id:'maito',    name:'Maito, juusto ja munat',  icon:'🥛', color:'#7dd3fc' },
+  { id:'eines',    name:'Einekset ja valmisruoat', icon:'🍱', color:'#fbbf24' },
+  { id:'kuiva',    name:'Kuivatuotteet',           icon:'🍝', color:'#d7be8b' },
+  { id:'mauste',   name:'Mausteet ja leivonta',    icon:'🧂', color:'#c4a0fc' },
+  { id:'herkku',   name:'Herkut ja naposteltavat', icon:'🍫', color:'#f49ac2' },
+  { id:'juoma',    name:'Juomat',                  icon:'🧃', color:'#38bdf8' },
+  { id:'pakaste',  name:'Pakasteet',               icon:'🧊', color:'#a5b4fc' },
+  { id:'koti',     name:'Koti ja siivous',         icon:'🧻', color:'#a3b2c2' },
+  { id:'hygienia', name:'Hygienia ja kauneus',     icon:'🧼', color:'#5eead4' },
+  { id:'apteekki', name:'Apteekki ja terveys',     icon:'💊', color:'#e879f9' },
+  { id:'lemmikki', name:'Lemmikit',                icon:'🐾', color:'#fdba74' },
+  { id:'lapsi',    name:'Lapset ja vauvat',        icon:'👶', color:'#bef264' },
+  { id:'muu',      name:'Muut',                    icon:'📦', color:'#9494ac' }
 ];
+
+// Vanhassa versiossa koti-osasto sisalsi myos hygienian, apteekkituotteet,
+// lemmikit ja vauvantarvikkeet. Naita id-tunnuksia kaytetaan itemCategory-
+// funktiossa vanhojen tuotteiden uudelleenarvaukseen.
+const KODISTA_EROTETUT = new Set(['hygienia', 'apteekki', 'lemmikki', 'lapsi']);
 const VARIPALETTI = ['#4ade80','#ff7b72','#7dd3fc','#fbbf24','#c4a0fc','#f49ac2',
                      '#38bdf8','#a5b4fc','#e0a066','#5eead4','#fca5a5','#a3b2c2'];
 
@@ -797,7 +806,10 @@ const CAT_WORDS = {
       'falafel','kampela','karitsa','makkara','silakka','härkis','kinkku','kyljys','lammas',
       'lenkki','muikku','pekoni','porsas','salami','turska','ahven','ankka','hanhi','hauki',
       'härkä','maksa','nakki','nauta','pihvi','possu','ravut','seiti','siika','file','kala',
-      'kana','lohi','made','rapu','ribs','tofu'],
+      'kana','lohi','made','rapu','ribs','tofu',
+      // --- lisatty 5.0.0 ---
+      'nyhtöpossu','broilerisuikale','kalkkunasuikale','lehtipihvi','ulkofile',
+      'sisafile','jauhelihapaketti','kylkipala','luomukananmuna'],
     maito: ['turkkilainen jogurtti','maustamaton jogurtti','laktoositon maito',
       'jäätelöjogurtti','rasvaton maito','sinihomejuusto','vaniljakastike','mantelimaito',
       'ranskankerma','sulatejuusto','tuorejuusto','kananmunia','kaurajuoma','kauramaito',
@@ -805,12 +817,26 @@ const CAT_WORDS = {
       'mozzarella','ruokakerma','soijajuoma','vispikerma','camembert','kananmuna','oivariini',
       'raejuusto','täysmaito','emmental','halloumi','jogurtti','parmesan','cheddar','munakas',
       'ricotta','smetana','juusto','kefiri','levite','gouda','kerma','maito','piimä','rahka',
-      'viili','aura','brie','edam','feta','muna','skyr','voi'],
+      'viili','aura','brie','edam','feta','muna','skyr','voi',
+      // --- yksialaiset merkkituotteet, lisatty 5.0.0 ---
+      'philadelphia','koskenlaskija','juustoportti','oddlygood','oltermanni',
+      'mozzarellapallo','turunmaa','gefilus','apetina','castello','kaslink',
+      'oatly','alpro','planti','viola','yosa'],
     eines: ['pinaattiohukainen','tonnikalasalaatti','porkkanalaatikko','perunalaatikko',
       'valmissalaatti','kaalilaatikko','pastasalaatti','kaalikääryle','kanasalaatti',
-      'lihapyörykkä','nuudeliannos','nuudelikuppi','valmiskeitto','hernekeitto','valmisruoka',
+      'nuudeliannos','nuudelikuppi','valmiskeitto','hernekeitto','valmisruoka',
       'kebabrulla','lihakeitto','pyttipannu','sosekeitto','lihapulla','ohukainen','laatikko',
-      'burrito','falafel','lasagne','hummus','keitto','eines','kebab','sushi','wok'],
+      'burrito','lasagne','hummus','keitto','eines','kebab','sushi','wok',
+      // --- lisatty 5.0.0 ---
+      'lihaperunasoselaatikko','jauhelihakastike','broilerikastike','makaronilaatikko',
+      'kasvissosekeitto','nuudelisalaatti','couscoussalaatti','janssoninkiusaus',
+      'lindströminpihvi','perunasalaatti','sillisalaatti','tomaattikeitto',
+      'kinkkukiusaus','juustokeitto','sienikeitto','kaalikeitto','kanakeitto',
+      'kalakeitto','lohikeitto','lohilaatikko','marjakeitto','mannapuuro',
+      'vispipuuro','riisipuuro','stroganoff','tikka masala','chili con carne',
+      'currykana','kanawrap','kebabannos','pizzapala','pastavuoka','lohivuoka',
+      'kasvispihvi','soijapihvi','valmispasta','valmisannos','mikroateria',
+      'coleslaw','kiisseli','rosolli'],
     kuiva: ['balsamiviinietikka','maapähkinäkastike','omenaviinietikka','tomaattiketsuppi',
       'maissitärkkelys','salaatinkastike','tomaattimurska','kookoshiutale','maapähkinävoi',
       'tortillalastu','chilikastike','kaurahiutale','mantelijauho','pastakastike',
@@ -820,7 +846,9 @@ const CAT_WORDS = {
       'soijarouhe','vehnäjauho','majoneesi','marmeladi','pastalevy','ruisjauho','rypsiöljy',
       'couscous','ketsuppi','kikherne','makaroni','spagetti','sriracha','hiutale','kastike',
       'nuudeli','sinappi','säilyke','bulgur','etikka','hunaja','leseet','linssi','hillo',
-      'jauho','murot','mysli','pasta','penne','riisi','salsa','muro','papu','taco','öljy'],
+      'jauho','murot','mysli','pasta','penne','riisi','salsa','muro','papu','taco','öljy',
+      // --- yksialaiset merkkituotteet, lisatty 5.0.0 ---
+      'jyväshyvä','myllärin','elovena','risella','barilla','nutella'],
     mauste: ['valkosipulijauhe','muskovadosokeri','sitruunapippuri','inkiväärijauhe',
       'fariinisokeri','laakerinlehti','vaniljasokeri','currykastike','grillimauste',
       'mustapippuri','paprikajauhe','valkopippuri','geelisokeri','hillosokeri','kaakaojauhe',
@@ -834,33 +862,93 @@ const CAT_WORDS = {
       'irtokarkki','maapähkinä','pikkuleipä','riisikakku','suklaalevy','digestive','salmiakki',
       'viinikumi','lakritsi','makeinen','pastilli','purukumi','manteli','marenki','patukka',
       'popcorn','pähkinä','vohveli','cashew','karkki','nougat','pipari','suklaa','toffee',
-      'dippi','keksi','naksu','sipsi'],
+      'dippi','keksi','naksu','sipsi',
+      // --- yksialaiset merkkituotteet, lisatty 5.0.0 ---
+      'tyrkisk peber','fazerina','marianne','pringles','brunberg','estrella',
+      'mynthon','läkerol','xylitol','geisha','pätkis','kismet','taffel',
+      'domino','dumle','tupla','panda','oreo','omar'],
     juoma: ['alkoholiton olut','appelsiinimehu','kahvinsuodatin','proteiinijuoma',
       'virvoitusjuoma','kivennäisvesi','mineraalivesi','sitruunasooda','suodatinkahvi',
       'energiajuoma','urheilujuoma','kuumakaakao','kuohuviini','long drink','valkoviini',
       'vihreä tee','kahvipapu','omenamehu','pikakahvi','punaviini','tuoremehu','vesipullo',
       'kombucha','limonadi','smoothie','yrttitee','lonkero','rooibos','siideri','kaakao',
       'glögi','jaffa','kahvi','kokis','limsa','rommi','tonic','vichy','viini','viski','vodka',
-      'cola','gini','mehu','olut','sima','vesi','tee'],
+      'cola','gini','mehu','olut','sima','vesi','tee',
+      // --- yksialaiset merkkituotteet, lisatty 5.0.0 ---
+      'koskenkorva','mehukatti','jaloviina','crowmoor','somersby','red bull',
+      'lapin kulta','battery','celsius','novelle','monster','sandels',
+      'pommac','sprite','pepsi','fanta','karhu','olvi','koff'],
     pakaste: ['broilerinugetti','herneet pakaste','pakastemansikka','pakastemustikka',
       'pakastepinaatti','jäätelöpakkaus','pakastevadelma','pepperonipizza','jäätelöpuikko',
       'jäätelötuutti','marjasekoitus','pakastekasvis','pakastemarjat','ranskanperuna',
       'lehtitaikina','pakasteleipä','pakastemarja','pakastepizza','ranskalaiset','kermaperuna',
       'lohkoperuna','sipsiperuna','kalapuikko','kalapuikot','voitaikina','kanapizza',
       'kanugetti','jäätelö','nugetti','pakaste','marja','pizza'],
-    koti: ['talouspaperiteline','uuninpuhdistusaine','yleispuhdistusaine','pikkuhousunsuoja',
+    // ---------------------------------------------------------------
+    //  KOTI on 5.0.0:ssa vain siivous, paperit ja kertakayttotavara.
+    //  Hygienia, apteekki, lemmikit ja lapset ovat omia osastojaan,
+    //  koska ne ovat kaupassa eri paikoissa.
+    // ---------------------------------------------------------------
+    koti: ['talouspaperiteline','uuninpuhdistusaine','yleispuhdistusaine',
+      'kertakayttolautanen','konetiskitabletti','huuhtelukirkaste',
       'tahranpoistoaine','ikkunanpesuaine','lattianpesuaine','mikrokuituliina',
-      'tekstiilihuuhde','astianpesuaine','ilmanraikastin','kurkkupastilli','kuukautissuoja',
-      'pyykinpesuaine','alumiinifolio','konetiskiaine','pumpulipuikko','suihkusaippua',
-      'aurinkorasva','huuhteluaine','hyttysmyrkky','kissanherkku','kissanhiekka','koiranherkku',
-      'kosteuspyyhe','leivinpaperi','parasetamoli','talouspaperi','wc-raikastin','d-vitamiini',
-      'deodorantti','hammasharja','hammaslanka','hammastahna','ibuprofeeni','kissanruoka',
-      'koiranruoka','kumihanskat','käsisaippua','partavaahto','siivousaine','talouspyyhe',
-      'terveysside','vessapaperi','roskapussi','särkylääke','tiskiharja','tuorekelmu',
-      'vessaharja','yskänlääke','hoitoaine','jätepussi','käsipyyhe','käsivoide','magnesium',
-      'nenäliina','partaterä','partavesi','pesuneste','pesusieni','tiskiaine','vanulappu',
-      'vitamiini','wc-paperi','ihovoide','laastari','pesuaine','tampooni','kondomi','panadol',
-      'paristo','saippua','shampoo','suuvesi','burana','lamppu','vaippa','folio','sieni'],
+      'kalkinpoistoaine','grillipuhdistaja','uuninpuhdistaja','tekstiilihuuhde',
+      'astianpesuaine','ilmanraikastin','pyykinpesuaine','viemärinavaaja',
+      'jauhepesuaine','nestepesuaine','tuoksukynttilä','lämpökynttilä',
+      'säilytyspussi','pakastepussi','alumiinifolio','konetiskiaine',
+      'nukanpoistin','siivousliina','grillisytytin','huuhteluaine',
+      'hyttysmyrkky','leivinpaperi','talouspaperi','wc-raikastin','kumihanskat',
+      'lautasliina','pyykkipoika','vaateharja','grillihiili','sytytyspala',
+      'nappiparisto','hehkulamppu','siivousaine','talouspyyhe','vessapaperi',
+      'roskapussi','tiskiharja','tuorekelmu','vessaharja','mikroliina',
+      'jätepussi','käsipyyhe','pesuneste','pesusieni','tiskiaine','wc-paperi',
+      'tulitikku','ledlamppu','servietti','pesuaine','paristo','lamppu','folio'],
+
+    hygienia: ['ihonpuhdistusaine','silmänympärysvoide','kynsilakanpoistaja',
+      'meikinpoistoaine','proteesipuhdistus','antiperspirantti','hammasharjanpää',
+      'pikkuhousunsuoja','vartalokuorinta','ihokarvanpoisto','kuukautissuoja',
+      'partatrimmeri','kuivashampoo','kasvopuhdiste','vartalovoide','partabalsami',
+      'suihkusaippua','käsisaippua','kosteusvoide','kasvonaamio','hiusnaamio',
+      'partavaahto','kosteuspyyhe','pumpulipuikko','aurinkorasva','aurinkovoide',
+      'tuoksusuihke','kylpyvaahto','sokeripasta','kynsilakka','meikkivoide',
+      'suihkugeeli','hammastahna','hammasharja','hammaslanka','hammasväli',
+      'terveysside','deodorantti','vahaliuska','päivävoide','jalkavoide',
+      'kasvovoide','huulirasva','huulipuna','ripsiväri','poskipuna','kynsiviila',
+      'partaterä','partavesi','partaöljy','hiuskiinne','hiuslakka','hiusgeeli',
+      'hiusväri','hiusnauha','vanutuppo','kylpysuola','hajuvesi','nenäliina',
+      'käsivoide','hoitoaine','vanulappu','tampooni','kondomi','ihovoide',
+      'saippua','shampoo','suuvesi','yövoide','talkki'],
+
+    apteekki: ['nikotiinipurukumi','nikotiinilaastari','maitohappobakteeri',
+      'laktaasitabletti','kalsiumtabletti','sinkkitabletti','kalanmaksaöljy',
+      'antihistamiini','urheiluteippi','monivitamiini','rautavalmiste',
+      'ummetuslääke','allergialääke','närästyslääke','ihottumavoide',
+      'kurkkupastilli','yskänpastilli','särkytabletti','elektrolyytti',
+      'omegakapseli','kurkkusumute','flunssalääke','kuumemittari','ripulilääke',
+      'haavateippi','kuumelääke','yskänlääke','särkylääke','vatsalääke',
+      'parasetamoli','ibuprofeeni','d-vitamiini','c-vitamiini','b-vitamiini',
+      'e-vitamiini','lisäravinne','sidetaitos','kylmäpussi','perusvoide',
+      'nenäsuihke','nenäsumute','silmätipat','korvatipat','suolaliuos',
+      'probiootti','kotitesti','magnesium','vitamiini','laastari','apteekki',
+      'aspirin','panadol','burana','ibusal','omega'],
+
+    lemmikki: ['auringonkukansiemen','lemmikkiruoka','koiranmakupala',
+      'kissanmakupala','jyrsijänruoka','akvaariorehu','kissanhiekka',
+      'koiranherkku','kissanherkku','linnunsiemen','kissanpurkki','koiranpurkki',
+      'pennunruoka','marsunruoka','koiranruoka','kissanruoka','täysravinto',
+      'koiranhihna','koiranpanta','kissanpanta','heinäpaali','kakkapussi',
+      'raapimapuu','koiranlelu','kissanlelu','kaninruoka','kalanruoka',
+      'kuivaruoka','märkäruoka','raakaruoka','royal canin','pedigree',
+      'friskies','hau-hau','whiskas','dogman','puruluu','purina','chappi',
+      'sheba'],
+
+    lapsi: ['äidinmaidonkorvike','pikkulapsenmaito','lastenlusikka',
+      'puhdistuspyyhe','porkkanasose','hedelmäsose','vauvashampoo','vauvasaippua',
+      'teippivaippa','housuvaippa','vaippapussi','vauvanpyyhe','vauvanpuuro',
+      'lastenpuuro','vauvanvelli','lastenvelli','vauvanruoka','lastenruoka',
+      'vauvatalkki','vauvakeksi','vauvavoide','uimavaippa','sosepurkki',
+      'tuttipullo','pulloharja','nokkamuki','marjasose','sosepussi',
+      'vauvapesu','vauvaöljy','yövaippa','vaippa','tutti'],
 };
 
 // Muotosanat eivät kerro kategoriasta mitään: kinkkuSUIKALEET on kinkkua.
@@ -890,6 +978,60 @@ function kutista(t){
   let ulos = '';
   for (const ch of t) if (ch !== ulos[ulos.length - 1]) ulos += ch;
   return ulos;
+}
+
+// ============================================================
+//  BRANDIT JA MARKKINOINTIMAAREET
+//  Kaupan brandi ei kerro kategoriasta mitaan: Pirkka myy seka
+//  vessapaperia etta jauhelihaa. Jos 'pirkka' lisattaisiin hakusanaksi,
+//  tuntematon Pirkka-tuote saisi VAARAN kategorian taydella varmuudella
+//  eika paatyisi asetusten Tunnistamattomat-listaan opetettavaksi.
+//  Siksi brandit poistetaan nimesta samaan tapaan kuin MUOTOSANAT.
+//
+//  HUOM: sana kuuluu JOKO tanne TAI CAT_WORDS-listalle, ei molempiin.
+//  Yksialaiset brandit (Oltermanni, Geisha, Elovena) ovat hakusanoja.
+// ============================================================
+const BRANDIT_RAAKA = [
+  // Kaupparyhmien omat merkit – myyvat kaikkea
+  'pirkka','pirkka parhaat','rainbow','kotimaista','x-tra','xtra','eldorado',
+  'euro shopper','k-menu',
+  // Monialaiset valmistajat
+  'valio','arla','arla ingman','atria','hk','snellman','saarioinen','fazer',
+  'vaasan','myllyn paras','kesko','unilever','nestle','nestlé','orkla','felix',
+  'knorr','blå band','apetit','findus','pouttu','kariniemen','paulig','meira',
+  'santa maria','risenta','urtekram','danone','lidl','tokmanni','prisma',
+  // Markkinointimaareet – kertovat tuoteominaisuudesta, eivat osastosta
+  'luomu','gluteeniton','laktoositon','vähälaktoosinen','sokeriton','rasvaton',
+  'kevyt','light','maustamaton','suolaton','vegaaninen','kotimainen','tuore',
+  'pakattu','iso','pieni','perhepakkaus','tarjous','uusi'
+];
+
+// Kaksisanaiset kasitellaan merkkijonona, yksisanaiset tokeneina.
+let BRANDIT_MONI = [], BRANDIT_YKSI = new Set();
+function rakennaBrandit(){
+  BRANDIT_MONI = []; BRANDIT_YKSI = new Set();
+  for (const b of BRANDIT_RAAKA){
+    const t = taita(normalisoi(b));
+    if (!t) continue;
+    if (t.includes(' ')) BRANDIT_MONI.push(t); else BRANDIT_YKSI.add(t);
+  }
+  // Pisin ensin, jotta 'pirkka parhaat' poistuu ennen kuin 'pirkka' ehtii
+  BRANDIT_MONI.sort((a, b) => b.length - a.length);
+}
+rakennaBrandit();
+
+// Onko koko nimi pelkka brandi?
+const onBrandi = (t) => BRANDIT_YKSI.has(t) || BRANDIT_MONI.indexOf(t) !== -1;
+
+// Palauttaa nimen ilman brandeja. Yksisanaista nimea ei kosketa, jotta
+// pelkka 'ELOVENA' voi yha osua sanakirjan omaan elovena-merkintaan.
+// Ei koskaan palauta tyhjaa: jos kaikki sanat ovat brandeja, nimi sailyy.
+function poistaBrandit(n){
+  if (!n || n.indexOf(' ') === -1) return n;
+  let t = ' ' + n + ' ';
+  for (const b of BRANDIT_MONI) t = t.split(' ' + b + ' ').join(' ');
+  const osat = t.trim().split(/\s+/).filter(o => o && !BRANDIT_YKSI.has(o));
+  return osat.length ? osat.join(' ') : n;
 }
 
 // Muokkausetäisyys, keskeytyy heti kun katko ylittyy
@@ -956,7 +1098,16 @@ function arvaaSanakirjasta(nimi){
   let parasP = 0, parasC = 'muu';
   const ehdota = (p, c) => { if (p > parasP){ parasP = p; parasC = c; } };
 
-  for (const n of variantit(taita(normalisoi(nimi)))){
+  const pohja  = taita(normalisoi(nimi));
+  const puhdas = poistaBrandit(pohja);
+  // Yksisanaista nimea ei riisuta, jotta 'ELOVENA' loytaa oman merkintansa.
+  // Mutta jos nimi on pelkka brandi, sumea haku osuu helposti vaaraan
+  // sanaan – PIRKKA on yhden merkin paassa PIIRAKASTA. Silloin vaaditaan
+  // tarkka osuma, muuten tuote menee Muut-osastoon ja paatyy asetusten
+  // Tunnistamattomat-listalle opetettavaksi.
+  const pelkkaBrandi = puhdas === pohja && onBrandi(pohja);
+
+  for (const n of variantit(puhdas)){
     if (!n) continue;
     const nk = kutista(n);
 
@@ -998,6 +1149,7 @@ function arvaaSanakirjasta(nimi){
       }
     }
   }
+  if (pelkkaBrandi && parasP < 2500) return 'muu';
   return parasP ? parasC : 'muu';
 }
 
@@ -1019,6 +1171,16 @@ function guessCategory(nimi){
 function itemCategory(it){
   const opittu = opitut[opitutAvain(it.name)];
   if (opittu && CAT_BY_ID[opittu.c]) return opittu.c;
+  // Ennen 5.0.0:aa hygienia, apteekki, lemmikit ja lapset olivat kaikki
+  // koti-osastossa. Arvataan vanhat koti-tuotteet uudelleen, jotta ne
+  // loytavat uuden osastonsa. Kasin valittu osasto on tallessa opitut-
+  // listassa ja tarkistettiin jo yllä, joten se ei ylikirjoitu.
+  // Mitaan ei kirjoiteta levylle: tuotteen oma cat paivittyy vasta kun
+  // sita seuraavan kerran muokataan.
+  if (it.cat === 'koti'){
+    const uusi = guessCategory(it.name);
+    if (KODISTA_EROTETUT.has(uusi) && CAT_BY_ID[uusi]) return uusi;
+  }
   if (it.cat && CAT_BY_ID[it.cat]) return it.cat;
   const arvaus = guessCategory(it.name);
   return CAT_BY_ID[arvaus] ? arvaus : 'muu';
@@ -1029,6 +1191,12 @@ function itemCategory(it){
 //  Yksi dokumentti kauppalista/_opitut, jonka MOLEMMAT käyttäjät lukevat
 //  ja kirjoittavat. Kun TERO opettaa, ISKÄ saa opin heti.
 // ============================================================
+// Kehittajatilan diagnostiikkaa varten: viimeisimman Firestore-snapshotin
+// metadata ja katkenneiden kuuntelujen maara. Nama eivat vaikuta mihinkaan
+// muuhun kuin asetusten kehittajaosioon.
+let viimeSnapshot = null;
+let synkkaVirheita = 0;
+
 let opitut = {};
 let omatSanat = {};        // asetuksissa lisätyt hakusanat: sana -> kategoria
 let tuntemattomat = {};    // Muut-osastoon päätyneet nimet
@@ -1451,6 +1619,14 @@ function subscribeUser(user){
         refreshStatus();
       }
 
+      viimeSnapshot = {
+        aika: Date.now(),
+        kayttaja: user,
+        valimuistista: snap.metadata.fromCache,
+        odottavia: snap.metadata.hasPendingWrites,
+        listoja: lists.length
+      };
+
       const sig = listsSig(lists);
       if (sig === lastSig[user]) return;
 
@@ -1467,6 +1643,7 @@ function subscribeUser(user){
       if (!omaKaiku) render();
     },
     (err) => {
+      synkkaVirheita++;
       console.error('Kuuntelu katkesi', err);
       showStatus('❌ Yhteysvirhe', '#dc2626', false);
     }
@@ -1679,6 +1856,14 @@ function updateUserButtons(){
 //  molemmille käyttäjille. PIN estää vain vahingossa säätämisen.
 // ============================================================
 const PIN = '3661';
+
+// ============================================================
+//  VERSIO
+//  Pidettava synkassa sw.js:n APP_VERSION-vakion kanssa. Kehittajatila
+//  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
+//  pyorii eri versio kuin luulet.
+// ============================================================
+const SOVELLUS_VERSIO = '5.0.0';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
@@ -1702,6 +1887,295 @@ window.tarkistaPin = () => {
     varise(60);
   }
 };
+
+
+// ============================================================
+//  KEHITTAJATILA
+//  Piilotettu vianetsintaosio. Avataan napauttamalla asetusten
+//  alalaidan versiotekstia seitseman kertaa – sama kuvio kuin
+//  Androidin kehittajaasetuksissa. Tila muistetaan localStoragessa.
+// ============================================================
+const KEHITYS_MUISTI = 'kauppalista_kehitys';
+let kehitysTila = false;
+try { kehitysTila = localStorage.getItem(KEHITYS_MUISTI) === '1'; } catch(e){}
+let kehitysNapautukset = 0, kehitysAjastin = null;
+
+function kokoTeksti(t){
+  if (t === null || t === undefined) return '–';
+  if (t < 1024) return t + ' B';
+  if (t < 1048576) return (t / 1024).toFixed(1) + ' kB';
+  return (t / 1048576).toFixed(1) + ' MB';
+}
+
+// Kysyy service workerilta sen oman versionumeron. Palauttaa null jos
+// SW ei ohjaa sivua tai ei vastaa 1,5 sekunnissa.
+function kysySwVersio(){
+  return new Promise((valmis) => {
+    const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+    // MessageChannel puuttuu joistakin ymparistoista. Kysely on pelkkaa
+    // lisatietoa, joten epaonnistuminen ei saa kaataa koko diagnostiikkaa.
+    if (!sw || typeof MessageChannel === 'undefined') return valmis(null);
+    let ratkaistu = false, kello = null;
+    const ratkaise = (arvo) => {
+      if (ratkaistu) return;
+      ratkaistu = true; clearTimeout(kello); valmis(arvo);
+    };
+    try {
+      const kanava = new MessageChannel();
+      kello = setTimeout(() => ratkaise(null), 1500);
+      kanava.port1.onmessage = (e) => ratkaise(e.data || null);
+      sw.postMessage({ type: 'VERSIO' }, [kanava.port2]);
+    } catch(e){ ratkaise(null); }
+  });
+}
+
+function localStorageKoko(){
+  let tavuja = 0, avaimia = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (!k || k.indexOf('kauppalista') !== 0) continue;
+      tavuja += (k.length + (localStorage.getItem(k) || '').length) * 2;  // UTF-16
+      avaimia++;
+    }
+  } catch(e){}
+  return { tavuja, avaimia };
+}
+
+async function keraaDiagnostiikka(){
+  const sw = await kysySwVersio();
+
+  let arvio = {};
+  try {
+    if (navigator.storage && navigator.storage.estimate) arvio = await navigator.storage.estimate();
+  } catch(e){}
+
+  let valimuistit = [];
+  try {
+    const nimet = await caches.keys();
+    valimuistit = await Promise.all(nimet.map(async (nimi) => {
+      try { const c = await caches.open(nimi); return { nimi, tiedostoja: (await c.keys()).length }; }
+      catch(e){ return { nimi, tiedostoja: -1 }; }
+    }));
+  } catch(e){}
+
+  let reg = null;
+  try { if (navigator.serviceWorker) reg = await navigator.serviceWorker.getRegistration(); }
+  catch(e){}
+
+  const ls = localStorageKoko();
+  const lists = USERS().flatMap(u => (states[u] && states[u].lists) || []);
+
+  return {
+    sivuVersio: SOVELLUS_VERSIO,
+    swVersio: sw ? sw.versio : null,
+    swTila: !('serviceWorker' in navigator) ? 'ei tuettu'
+      : !navigator.serviceWorker.controller ? 'ei ohjaa sivua'
+      : (reg && reg.waiting) ? 'päivitys odottaa'
+      : (reg && reg.installing) ? 'asentuu'
+      : 'aktiivinen',
+    valimuistit,
+    tallennusKaytto: arvio.usage,
+    tallennusKiintio: arvio.quota,
+    lsTavuja: ls.tavuja,
+    lsAvaimia: ls.avaimia,
+    verkossa: navigator.onLine,
+    odottaviaKirjoituksia: !!pendingWrites,
+    kuuntelijoita: Object.keys(unsubs).length,
+    synkkaVirheita,
+    viimeSnapshot,
+    listoja: lists.length,
+    tuotteita: lists.reduce((sum, l) => sum + ((l.items || []).length), 0),
+    kayttajia: KAYTTAJAT.length,
+    kategorioita: CATEGORIES.length,
+    sanastoKoko: SANASTO.length,
+    opittuja: Object.keys(opitut).length,
+    omiaSanoja: Object.keys(omatSanat).length,
+    tunnistamattomia: Object.keys(tuntemattomat).length,
+    nakyma: (matchMedia('(display-mode: standalone)').matches || navigator.standalone)
+      ? 'standalone' : 'selain',
+    ruutu: innerWidth + '×' + innerHeight + ' @' + (devicePixelRatio || 1) + 'x',
+    kieli: navigator.language,
+    selain: navigator.userAgent
+  };
+}
+
+// Rivi jossa vasemmalla selite ja oikealla arvo
+function kehitysKentta(sailio, nimi, arvo, lisa, korosta){
+  const r = rivi();
+  r.appendChild(kuvaus(nimi, lisa));
+  const v = document.createElement('div');
+  v.style.cssText = 'font-size:13px;font-weight:700;text-align:right;' +
+    'flex:0 1 auto;min-width:0;overflow-wrap:anywhere;' +
+    'font-variant-numeric:tabular-nums;color:' + (korosta ? '#f97316' : '#c8c8d8');
+  v.textContent = arvo;
+  r.appendChild(v);
+  sailio.appendChild(r);
+}
+
+// Toimintorivi: selite omalla rivillään, nappi alla koko leveydeltä
+function kehitysToiminto(sailio, nimi, selite, nappiTeksti, luokka, toiminto){
+  const r = rivi(true);
+  r.style.paddingLeft = '0';
+  r.appendChild(kuvaus(nimi, selite));
+  r.appendChild(nappi(nappiTeksti, luokka, toiminto));
+  sailio.appendChild(r);
+}
+
+function piirraKehitysOsio(sisalto){
+  const d = osio('🛠️ Kehittäjätila');
+  const lataus = document.createElement('div');
+  lataus.className = 'tyhjaOsio';
+  lataus.textContent = 'Kerätään tietoja…';
+  d.appendChild(lataus);
+  sisalto.appendChild(d);
+
+  keraaDiagnostiikka().then((t) => {
+    if (!d.isConnected) return;          // asetukset ehdittiin piirtää uusiksi
+    lataus.remove();
+    const K = (nimi, arvo, lisa, korosta) => kehitysKentta(d, nimi, arvo, lisa, korosta);
+
+    // ---- Versiot ----
+    const eriVersiot = !!t.swVersio && t.swVersio !== t.sivuVersio;
+    K('Sivun versio', t.sivuVersio);
+    K('Service worker', t.swVersio || '–',
+      eriVersiot ? 'ERI KUIN SIVU – päivitys on kesken tai sw.js:n APP_VERSION unohtui'
+                 : (t.swVersio ? null : 'ei vastannut'), eriVersiot);
+    K('SW-tila', t.swTila, null, t.swTila === 'päivitys odottaa');
+
+    // ---- Yhteys ----
+    K('Verkko', t.verkossa ? 'yhteydessä' : 'offline', null, !t.verkossa);
+    K('Odottavia kirjoituksia', t.odottaviaKirjoituksia ? 'kyllä' : 'ei',
+      null, t.odottaviaKirjoituksia);
+    K('Aktiivisia kuuntelijoita', String(t.kuuntelijoita),
+      t.kuuntelijoita === t.kayttajia ? null : 'odotettiin ' + t.kayttajia,
+      t.kuuntelijoita !== t.kayttajia);
+    K('Synkkavirheitä', String(t.synkkaVirheita), null, t.synkkaVirheita > 0);
+    if (t.viimeSnapshot){
+      const ika = Math.round((Date.now() - t.viimeSnapshot.aika) / 1000);
+      K('Viimeisin päivitys', ika + ' s sitten',
+        t.viimeSnapshot.valimuistista ? 'luettu välimuistista' : 'luettu palvelimelta');
+    } else {
+      K('Viimeisin päivitys', 'ei vielä', 'Firestore ei ole vastannut kertaakaan', true);
+    }
+
+    // ---- Tallennustila ----
+    K('Selaimen tallennustila', kokoTeksti(t.tallennusKaytto),
+      t.tallennusKiintio ? 'kiintiöstä ' + kokoTeksti(t.tallennusKiintio) : null);
+    K('localStorage', kokoTeksti(t.lsTavuja), t.lsAvaimia + ' avainta');
+    if (!t.valimuistit.length) K('Välimuistit', 'ei yhtään', null, true);
+    t.valimuistit.forEach(c =>
+      K(c.nimi, c.tiedostoja < 0 ? 'ei luettavissa' : c.tiedostoja + ' tiedostoa'));
+
+    // ---- Data ----
+    K('Listoja', String(t.listoja));
+    K('Tuotteita', String(t.tuotteita));
+    K('Käyttäjiä', String(t.kayttajia));
+    K('Kategorioita', String(t.kategorioita));
+    K('Sanaston koko', t.sanastoKoko + ' sanaa');
+    K('Opittuja', String(t.opittuja));
+    K('Omia hakusanoja', String(t.omiaSanoja));
+    K('Tunnistamattomia', String(t.tunnistamattomia));
+
+    // ---- Ympäristö ----
+    K('Näkymä', t.nakyma);
+    K('Ruutu', t.ruutu);
+
+    // ---- Toiminnot ----
+    kehitysToiminto(d, 'Päivitä luvut', 'Kerää tiedot uudelleen',
+      'Päivitä', '', () => piirraAsetukset());
+
+    kehitysToiminto(d, 'Tarkista päivitys',
+      'Pakottaa service workerin hakemaan uuden version palvelimelta',
+      'Tarkista', '', async () => {
+        try {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (!reg) return showStatus('Ei service workeria', '#dc2626');
+          await reg.update();
+          showStatus('✅ Tarkistettu', '#22c55e');
+          setTimeout(() => piirraAsetukset(), 1200);
+        } catch(e){
+          console.error(e);
+          showStatus('❌ Tarkistus epäonnistui', '#dc2626');
+        }
+      });
+
+    kehitysToiminto(d, 'Kopioi diagnostiikka',
+      'Kaikki yllä olevat tiedot leikepöydälle tekstinä',
+      'Kopioi', '', async () => {
+        const teksti = JSON.stringify(t, null, 2);
+        try {
+          await navigator.clipboard.writeText(teksti);
+          showStatus('✅ Kopioitu', '#22c55e');
+        } catch(e){
+          console.log(teksti);
+          showStatus('Kopiointi ei onnistunut – tiedot konsolissa', '#f97316');
+        }
+      });
+
+    kehitysToiminto(d, 'Tyhjennä välimuisti',
+      'Poistaa service workerin ja kaikki sen välimuistit ja lataa sovelluksen ' +
+      'uudelleen. Listat ovat Firestoressa eivätkä katoa. Vaatii verkkoyhteyden.',
+      'Tyhjennä', 'vaara', async () => {
+        if (!navigator.onLine){
+          return showStatus('❌ Vaatii verkkoyhteyden', '#dc2626');
+        }
+        if (!confirm('Tyhjennetäänkö välimuisti ja ladataanko sovellus uudelleen?\n\n' +
+                     'Listat säilyvät. Sovellus haetaan kokonaan uudelleen verkosta.')) return;
+        showStatus('Tyhjennetään…', '#f97316', true);
+        try {
+          const nimet = await caches.keys();
+          await Promise.all(nimet.map(n => caches.delete(n)));
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        } catch(e){ console.error('Välimuistin tyhjennys epäonnistui', e); }
+        location.reload();
+      });
+
+    kehitysToiminto(d, 'Poistu kehittäjätilasta', 'Osio piilotetaan taas',
+      'Poistu', '', () => {
+        kehitysTila = false;
+        try { localStorage.removeItem(KEHITYS_MUISTI); } catch(e){}
+        piirraAsetukset();
+      });
+  }).catch((e) => {
+    console.error('Diagnostiikan keruu epäonnistui', e);
+    lataus.textContent = 'Tietojen keruu epäonnistui – katso konsoli.';
+  });
+}
+
+function piirraVersioKortti(sisalto){
+  const v = document.createElement('div');
+  v.className = 'asetusKortti';
+  v.style.cssText = 'text-align:center;padding:18px 16px;' +
+                    '-webkit-user-select:none;user-select:none;';
+  const teksti = document.createElement('div');
+  teksti.style.cssText = 'font-size:12px;color:#5f5f75;letter-spacing:1px;';
+  teksti.textContent = 'Kauppalista ' + SOVELLUS_VERSIO;
+  v.appendChild(teksti);
+
+  if (!kehitysTila){
+    v.style.cursor = 'pointer';
+    v.onclick = () => {
+      kehitysNapautukset++;
+      clearTimeout(kehitysAjastin);
+      kehitysAjastin = setTimeout(() => {
+        kehitysNapautukset = 0;
+        teksti.textContent = 'Kauppalista ' + SOVELLUS_VERSIO;
+      }, 1500);
+      if (kehitysNapautukset >= 7){
+        kehitysNapautukset = 0;
+        kehitysTila = true;
+        try { localStorage.setItem(KEHITYS_MUISTI, '1'); } catch(e){}
+        varise(40);
+        piirraAsetukset();
+      } else if (kehitysNapautukset >= 4){
+        teksti.textContent = 'Vielä ' + (7 - kehitysNapautukset) + ' napautusta…';
+      }
+    };
+  }
+  sisalto.appendChild(v);
+}
 
 function osio(otsikko){
   const d = document.createElement('div');
@@ -1930,6 +2404,10 @@ function piirraAsetukset(){
     }));
   l.appendChild(lr);
   sisalto.appendChild(l);
+
+  // ---------- Versio ja kehittajatila ----------
+  piirraVersioKortti(sisalto);
+  if (kehitysTila) piirraKehitysOsio(sisalto);
 }
 
 // ---------- Asetusten toiminnot ----------
