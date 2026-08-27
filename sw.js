@@ -6,7 +6,7 @@
 //  Nosta SAMALLA index.html:n SOVELLUS_VERSIO samaan lukuun.
 //  Asetusten kehittäjätila vertaa näitä ja huomauttaa jos ne eroavat.
 // ============================================================
-const APP_VERSION = "5.0.0";
+const APP_VERSION = "5.0.1";
 
 const BASE        = "/kauppalista/";
 const SHELL_CACHE = "kauppalista-shell-" + APP_VERSION;

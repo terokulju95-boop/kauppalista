@@ -261,9 +261,12 @@ html{scroll-behavior:smooth;}
 /* ---------- Muokkaus ---------- */
 .item.editing{border-color:rgba(255,152,48,0.55);background:rgba(40,32,22,0.92);cursor:default;flex-direction:column;align-items:stretch;gap:10px;}
 .item.editing:hover{transform:none;background:rgba(40,32,22,0.92);}
-.editGrid{display:flex;gap:10px;}
-.editGrid .qtyBox{flex:0 0 92px;}
-.editGrid .catBox{flex:1;}
+.editGrid{display:flex;gap:10px;align-items:stretch;}
+/* Määrän säädin pidetään kompaktina ja kategoriavalinta saa loppu tilan.
+   min-width:0 on pakollinen: ilman sitä select ei suostu kutistumaan
+   flex-lapsena, vaan työntäisi säätimen rivin ulkopuolelle. */
+.editGrid .qtyBox{flex:0 0 auto;}
+.editGrid .catBox{flex:1 1 auto;min-width:0;}
 .item.editing input,.item.editing select{
   padding:12px 14px;font-size:15px;border-radius:12px;text-transform:none;
 }
@@ -459,9 +462,28 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
   .lisaysRivi .maaraSaadin{flex:0 0 auto;}
   .lisaysRivi .btn-add{flex:1 1 100% !important;}
 }
-.item.editing .maaraSaadin{flex:1 1 auto;}
-.item.editing .maaraSaadin input{flex:1 1 auto;width:auto;padding:12px 2px;}
+/* Muokkausnäkymässä säädin ei saa venyä.
+   Tekstikentän luontainen leveys on n. 20 merkkiä, ja koska flex-lapsen
+   min-width on oletuksena auto, kenttä kieltäytyy kutistumasta sen alle.
+   Se söi koko rivin kolmella tavalla: kategoriavalinnasta jäi näkyviin vain
+   nuoli, säädin venyi suhteettoman isoksi, ja +-nappi leikkautui pois
+   .maaraSaadin-laatikon overflow:hidden -reunan taakse.
+   Kiinteä leveys + min-width:0 korjaa kaikki kolme.
+   HUOM: nämä valitsimet ovat tarkempia kuin .editGrid .qtyBox, joten
+   leveys on määriteltävä täällä – ei siellä. */
+.item.editing .maaraSaadin{flex:0 0 auto;}
+.item.editing .maaraSaadin input{flex:0 0 46px;width:46px;min-width:0;padding:12px 2px;}
 .item.editing .maaraNappi{flex:0 0 44px;width:44px;font-size:24px;}
+
+/* Kapealla ruudulla kategorian nimestä näkyisi vierekkäin vain pari
+   kirjainta, joten säädin ja valinta latotaan päällekkäin täyteen
+   leveyteen. Raja 400px: alle jäävät mm. iPhone 15 (393px). */
+@media (max-width: 400px){
+  .editGrid{flex-wrap:wrap;}
+  .item.editing .editGrid .maaraSaadin{flex:1 1 100%;}
+  .item.editing .editGrid .maaraSaadin input{flex:1 1 auto;width:auto;}
+  .editGrid .catBox{flex:1 1 100%;}
+}
 
 
 /* ============ ASETUKSET ============ */
@@ -1863,7 +1885,7 @@ const PIN = '3661';
 //  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
 //  pyorii eri versio kuin luulet.
 // ============================================================
-const SOVELLUS_VERSIO = '5.0.0';
+const SOVELLUS_VERSIO = '5.0.1';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
