@@ -431,6 +431,113 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
 .btnPoista:hover{background:rgba(255,77,77,0.26);color:#fff;transform:none;box-shadow:none;}
 .editActions button{padding:14px 8px;font-size:13px;letter-spacing:0.5px;}
 
+
+/* ============ MÄÄRÄN SÄÄDIN ============ */
+.maaraSaadin{display:flex;align-items:stretch;gap:0;flex:0 0 auto;
+  border:2px solid rgba(255,255,255,0.1);border-radius:14px;
+  background:rgba(30,30,40,0.8);overflow:hidden;}
+.maaraSaadin input{border:0;border-radius:0;background:transparent;text-align:center;
+  width:56px;flex:0 0 56px;padding:14px 2px;font-size:17px;}
+.maaraSaadin input:focus{box-shadow:none;transform:none;background:rgba(255,152,48,0.08);}
+.maaraNappi{
+  flex:0 0 48px;width:48px;padding:0;border-radius:0;border:0;
+  background:rgba(255,255,255,0.06);color:#ff9830;
+  font-size:26px;font-weight:700;line-height:1;box-shadow:none;
+  display:flex;align-items:center;justify-content:center;
+}
+.maaraNappi:hover{background:rgba(255,152,48,0.2);transform:none;box-shadow:none;}
+.maaraNappi:active{background:rgba(255,152,48,0.35);transform:none;}
+.maaraNappi::before{display:none;}
+.item.editing .maaraSaadin{flex:1 1 auto;}
+.item.editing .maaraSaadin input{flex:1 1 auto;width:auto;padding:12px 2px;}
+.item.editing .maaraNappi{flex:0 0 44px;width:44px;font-size:24px;}
+
+
+/* ============ ASETUKSET ============ */
+.header{position:relative;}
+.rataspainike{
+  position:absolute;top:8px;right:0;width:50px;height:50px;padding:0;border-radius:16px;
+  font-size:24px;line-height:1;background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.14);color:#c8c8d8;box-shadow:none;
+  display:flex;align-items:center;justify-content:center;
+}
+.rataspainike:hover{background:rgba(255,152,48,0.16);border-color:rgba(255,152,48,0.5);
+  color:#ff9830;transform:none;box-shadow:none;}
+.rataspainike:active{transform:scale(0.92) rotate(35deg);}
+
+body[data-view="asetukset"] .header,
+body[data-view="asetukset"] .user-switcher,
+body[data-view="asetukset"] #luontiKortti,
+body[data-view="asetukset"] #uusiListaBtn,
+body[data-view="asetukset"] #listContainer,
+body[data-view="asetukset"] .divider,
+body[data-view="asetukset"] #activeArea,
+body[data-view="asetukset"] #lisaaAuki{display:none !important;}
+body[data-view="asetukset"] #topbar{display:flex !important;}
+body[data-view="asetukset"] #topbar .viiva{display:none !important;}
+#asetukset{display:none;}
+body[data-view="asetukset"] #asetukset{display:block;}
+
+.asetusKortti{
+  background:rgba(20,20,30,0.6);border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px;padding:20px;margin-bottom:16px;
+}
+.asetusOtsikko{font-size:15px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+  color:#ff9830;margin-bottom:14px;display:flex;align-items:center;gap:9px;}
+.asetusTeksti{font-size:13px;color:#9a9ab0;line-height:1.55;margin-bottom:14px;}
+.asetusRivi{
+  display:flex;align-items:center;gap:12px;padding:13px 0;
+  border-top:1px solid rgba(255,255,255,0.07);
+}
+.asetusRivi:first-of-type{border-top:0;}
+.asetusRivi .kuvaus{flex:1;min-width:0;font-size:16px;font-weight:600;overflow-wrap:break-word;}
+/* Kun rivillä on useampi nappi, nimi saa oman rivinsä ja napit jakavat leveyden */
+.asetusRivi.pysty{flex-wrap:wrap;}
+.asetusRivi.pysty .kuvaus{flex:1 1 100%;margin-bottom:11px;}
+.asetusRivi.pysty .pikkuNappi{flex:1 1 0;min-width:0;padding:12px 6px;}
+.asetusRivi.pysty select{flex:1 1 0;min-width:0;max-width:none !important;}
+.asetusRivi.pysty .varipala{position:absolute;}
+.asetusRivi.pysty{position:relative;padding-left:32px;}
+.asetusRivi.pysty .varipala{left:0;top:17px;}
+.asetusRivi .lisatieto{font-size:12px;color:#7a7a92;font-weight:500;margin-top:3px;}
+.pikkuNappi{
+  padding:11px 15px;font-size:13px;border-radius:12px;box-shadow:none;flex:0 0 auto;
+  background:rgba(255,255,255,0.08);color:#d0d0e0;border:1px solid rgba(255,255,255,0.14);
+}
+.pikkuNappi:hover{background:rgba(255,255,255,0.16);color:#fff;transform:none;box-shadow:none;}
+.pikkuNappi.vaara{background:rgba(255,77,77,0.15);color:#ff8a8a;border-color:rgba(255,77,77,0.4);}
+.pikkuNappi.paa{background:linear-gradient(135deg,#ff9830,#ff7a00);color:#000;border:0;font-weight:800;}
+.kytkin{
+  flex:0 0 60px;width:60px;height:34px;border-radius:99px;padding:0;border:0;box-shadow:none;
+  background:rgba(255,255,255,0.14);position:relative;transition:background 0.25s;
+}
+.kytkin::after{content:'';position:absolute;top:4px;left:4px;width:26px;height:26px;
+  border-radius:50%;background:#fff;transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);}
+.kytkin.paalla{background:linear-gradient(135deg,#4ade80,#22c55e);}
+.kytkin.paalla::after{transform:translateX(26px);}
+.kytkin::before{display:none;}
+.kytkin:hover{transform:none;box-shadow:none;}
+.asetusSyote{margin-bottom:10px;}
+.asetusSyote input,.asetusSyote select{text-transform:none;font-size:15px;padding:13px 15px;}
+#asetusSisalto select{
+  background:rgba(30,30,40,0.9);border:2px solid rgba(255,255,255,0.12);border-radius:13px;
+  color:#fff;font-family:inherit;font-size:15px;font-weight:600;padding:13px 38px 13px 14px;
+  outline:none;appearance:none;-webkit-appearance:none;text-transform:none;
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff9830' stroke-width='3'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;background-position:right 13px center;background-size:16px;
+}
+#asetusSisalto select:focus{border-color:#ff9830;}
+#asetusSisalto select option{background:#16161a;color:#fff;}
+.rivinSyotteet{display:flex;gap:10px;margin-bottom:10px;}
+.rivinSyotteet .emojiKentta{flex:0 0 76px;text-align:center;text-transform:none;}
+.rivinSyotteet input:not(.emojiKentta){flex:1;min-width:0;text-transform:none;}
+#pinSyote{text-align:center;font-size:28px;letter-spacing:10px;margin-bottom:8px;}
+.pinVirhe{color:#ff7a7a;font-size:13px;font-weight:700;min-height:20px;
+  text-align:center;margin-bottom:8px;}
+.tyhjaOsio{font-size:13px;color:#6f6f88;padding:10px 0;font-style:italic;}
+.varipala{width:22px;height:22px;border-radius:7px;flex:0 0 22px;
+  border:1px solid rgba(255,255,255,0.25);}
+
 /* ---------- Liikkeen vähennys ---------- */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
@@ -459,15 +566,13 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
   </div>
 
   <div class='header'>
+    <button class='rataspainike' type='button' onclick='avaaAsetukset()' aria-label='Asetukset'>⚙</button>
     <h1>Kauppalistat</h1>
     <div class='subtitle'>Älykäs ostoslista</div>
   </div>
 
   <!-- Käyttäjävalinta -->
-  <div class='user-switcher'>
-    <button class='user-btn' id='btn-TERO' onclick='switchUser("TERO")'>🧔 TERO</button>
-    <button class='user-btn' id='btn-ISKÄ' onclick='switchUser("ISKÄ")'>👴 ISKÄ</button>
-  </div>
+  <div class='user-switcher' id='userSwitcher'></div>
 
   <div class='glass-card' id='luontiKortti'>
     <div class='row'>
@@ -477,6 +582,20 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
       <button class='btn-add' onclick='addList()'>Luo</button>
     </div>
   </div>
+
+  <section id='asetukset'>
+    <div id='pinPortti'>
+      <div class='asetusKortti'>
+        <div class='asetusOtsikko'>🔒 Asetukset</div>
+        <p class='asetusTeksti'>Syötä PIN-koodi.</p>
+        <input id='pinSyote' inputmode='numeric' pattern='[0-9]*' maxlength='8'
+               placeholder='••••' autocomplete='off'>
+        <div id='pinVirhe' class='pinVirhe'></div>
+        <button class='isoNappi' type='button' onclick='tarkistaPin()'>Avaa</button>
+      </div>
+    </div>
+    <div id='asetusSisalto'></div>
+  </section>
 
   <section id='listContainer'></section>
   <button class='isoNappi' id='uusiListaBtn' type='button' onclick='avaaLuonti()'>+ Uusi lista</button>
@@ -495,11 +614,13 @@ html.nav-taakse::view-transition-old(root),html.nav-taakse::view-transition-new(
     <button class='isoNappi' id='lisaaAuki' type='button' onclick='avaaLisays()'>+ Lisää tuote</button>
     <div class='glass-card'>
       <div class='row' style='margin-bottom:12px;'>
-        <div style='flex:3;'>
+        <div style='flex:1;min-width:0;'>
           <input id='itemName' placeholder='Tuote...' autocomplete='off'>
         </div>
-        <div style='flex:1;'>
+        <div class='maaraSaadin'>
+          <button type='button' class='maaraNappi' onclick='saadaMaara(-1)' aria-label='Vähennä'>&minus;</button>
           <input id='itemQty' value='1' inputmode='numeric' pattern='[0-9]*'>
+          <button type='button' class='maaraNappi' onclick='saadaMaara(1)' aria-label='Lisää'>+</button>
         </div>
       </div>
       <button class='btn-add' style='width:100%;' onclick='addItem()'>Lisää tuote</button>
@@ -537,15 +658,30 @@ const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
 
-const USERS = ['TERO', 'ISKÄ'];
-const EMOJI = { 'TERO': '🧔', 'ISKÄ': '👴' };
+// Käyttäjillä on PYSYVÄ tunniste erillään näyttönimestä. Listat sijaitsevat
+// polussa kauppalista/{tunniste}/lists, joten nimen vaihto ei saa siirtää dataa.
+const OLETUSKAYTTAJAT = [
+  { id: 'TERO', nimi: 'TERO', emoji: '🧔' },
+  { id: 'ISKÄ', nimi: 'ISKÄ', emoji: '👴' }
+];
+let KAYTTAJAT = OLETUSKAYTTAJAT.map(k => ({ ...k }));
+const USERS = () => KAYTTAJAT.map(k => k.id);
+const kayttaja = (id) => KAYTTAJAT.find(k => k.id === id) || { id, nimi: id, emoji: '👤' };
 
-let states  = { 'TERO': { lists: [] }, 'ISKÄ': { lists: [] } };
-let active  = { 'TERO': null, 'ISKÄ': null };
-let lastSig = { 'TERO': null, 'ISKÄ': null };
+let states  = {};
+let active  = {};
+let lastSig = {};
+function varmistaTilat(){
+  for (const id of USERS()){
+    if (!states[id]) states[id] = { lists: [] };
+    if (!(id in active)) active[id] = null;
+    if (!(id in lastSig)) lastSig[id] = null;
+  }
+}
+varmistaTilat();
 
 let currentUser = localStorage.getItem('kauppalista_user') || 'TERO';
-if (!USERS.includes(currentUser)) currentUser = 'TERO';
+if (!USERS().includes(currentUser)) currentUser = USERS()[0] || 'TERO';
 
 const unsubs = {};
 let pendingWrites = false;
@@ -573,21 +709,46 @@ function writeJSON(key, value){
 //  Ylhäältä alas siinä järjestyksessä kuin kaupassa kävellään.
 //  Vaihda rivien järjestystä jos oma kauppasi on eri mallinen.
 // ============================================================
-const CATEGORIES = [
-  { id:'hevi',    name:'Hedelmät ja vihannekset', icon:'🥬' },
-  { id:'leipa',   name:'Leipä ja leivonnaiset',   icon:'🍞' },
-  { id:'liha',    name:'Liha ja kala',            icon:'🥩' },
-  { id:'maito',   name:'Maito, juusto ja munat',  icon:'🥛' },
-  { id:'eines',   name:'Einekset ja valmisruoat', icon:'🍱' },
-  { id:'kuiva',   name:'Kuivatuotteet',           icon:'🍝' },
-  { id:'mauste',  name:'Mausteet ja leivonta',    icon:'🧂' },
-  { id:'herkku',  name:'Herkut ja naposteltavat', icon:'🍫' },
-  { id:'juoma',   name:'Juomat',                  icon:'🧃' },
-  { id:'pakaste', name:'Pakasteet',               icon:'🧊' },
-  { id:'koti',    name:'Koti ja hygienia',        icon:'🧻' },
-  { id:'muu',     name:'Muut',                    icon:'📦' }
+const PERUSKATEGORIAT = [
+  { id:'hevi',    name:'Hedelmät ja vihannekset', icon:'🥬', color:'#4ade80' },
+  { id:'leipa',   name:'Leipä ja leivonnaiset',   icon:'🍞', color:'#e0a066' },
+  { id:'liha',    name:'Liha ja kala',            icon:'🥩', color:'#ff7b72' },
+  { id:'maito',   name:'Maito, juusto ja munat',  icon:'🥛', color:'#7dd3fc' },
+  { id:'eines',   name:'Einekset ja valmisruoat', icon:'🍱', color:'#fbbf24' },
+  { id:'kuiva',   name:'Kuivatuotteet',           icon:'🍝', color:'#d7be8b' },
+  { id:'mauste',  name:'Mausteet ja leivonta',    icon:'🧂', color:'#c4a0fc' },
+  { id:'herkku',  name:'Herkut ja naposteltavat', icon:'🍫', color:'#f49ac2' },
+  { id:'juoma',   name:'Juomat',                  icon:'🧃', color:'#38bdf8' },
+  { id:'pakaste', name:'Pakasteet',               icon:'🧊', color:'#a5b4fc' },
+  { id:'koti',    name:'Koti ja hygienia',        icon:'🧻', color:'#a3b2c2' },
+  { id:'muu',     name:'Muut',                    icon:'📦', color:'#9494ac' }
 ];
-const CAT_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+const VARIPALETTI = ['#4ade80','#ff7b72','#7dd3fc','#fbbf24','#c4a0fc','#f49ac2',
+                     '#38bdf8','#a5b4fc','#e0a066','#5eead4','#fca5a5','#a3b2c2'];
+
+// Asetuksista tulevat lisäykset, piilotukset ja järjestys
+let kategoriaAsetukset = { lisatyt: [], piilotetut: [], jarjestys: [] };
+let CATEGORIES = [];
+
+function rakennaKategoriat(){
+  const kaikki = [...PERUSKATEGORIAT, ...(kategoriaAsetukset.lisatyt || [])];
+  const piilo = new Set(kategoriaAsetukset.piilotetut || []);
+  const jarj = kategoriaAsetukset.jarjestys || [];
+  const nakyvat = kaikki.filter(c => c.id === 'muu' || !piilo.has(c.id));
+  nakyvat.sort((a, b) => {
+    if (a.id === 'muu') return 1;            // Muut aina viimeisenä
+    if (b.id === 'muu') return -1;
+    const ia = jarj.indexOf(a.id), ib = jarj.indexOf(b.id);
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1) return -1;
+    if (ib !== -1) return 1;
+    return kaikki.indexOf(a) - kaikki.indexOf(b);
+  });
+  CATEGORIES = nakyvat;
+  CAT_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+  arvausMuisti.clear();
+}
+let CAT_BY_ID = {};
 
 // Hakusanat -> kategoria. Osuman pituus ja sijainti ratkaisevat; suomen
 // yhdyssanassa PÄÄSANA on lopussa (appelsiinitäys-MEHU on juoma, ei hedelmä).
@@ -752,20 +913,26 @@ function variantit(n){
   return ulos;
 }
 
-// Sanakirja esikäsitellään kerran
-const SANASTO = (() => {
-  const nahty = new Set(), ulos = [];
-  for (const [cat, sanat] of Object.entries(CAT_WORDS)){
-    for (const w of sanat){
-      const wt = taita(normalisoi(w));
-      if (wt && !nahty.has(wt)){ nahty.add(wt); ulos.push([wt, kutista(wt), cat]); }
-    }
-  }
-  return ulos;
-})();
-
 // Kevyt normalisointi historian ja oppien avaimiin
 const normName = (t) => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+// Sanakirja esikäsitellään kerran. Asetuksissa lisätyt sanat tulevat mukaan
+// ja voittavat perussanakirjan, koska ne ovat käyttäjän omia korjauksia.
+let SANASTO = [];
+function rakennaSanasto(){
+  const nahty = new Set(), ulos = [];
+  const lisaa = (sana, cat) => {
+    const wt = taita(normalisoi(sana));
+    if (!wt || nahty.has(wt)) return;
+    nahty.add(wt); ulos.push([wt, kutista(wt), cat]);
+  };
+  for (const [sana, cat] of Object.entries(omatSanat || {})) lisaa(sana, cat);
+  for (const [cat, sanat] of Object.entries(CAT_WORDS)){
+    for (const w of sanat) lisaa(w, cat);
+  }
+  SANASTO = ulos;
+  if (typeof arvausMuisti !== 'undefined') arvausMuisti.clear();
+}
 
 const arvausMuisti = new Map();   // sama nimi lasketaan vain kerran
 
@@ -831,11 +998,14 @@ function guessCategory(nimi){
 
 // Opittu valinta voittaa tuotteeseen tallennetun kategorian, jotta TERON
 // opetus siirtyy myös ISKÄN olemassa oleville tuotteille.
+// Jos kategoria on piilotettu tai poistettu, tuote päätyy Muut-osastoon
+// eikä katoa näkyvistä.
 function itemCategory(it){
   const opittu = opitut[opitutAvain(it.name)];
   if (opittu && CAT_BY_ID[opittu.c]) return opittu.c;
   if (it.cat && CAT_BY_ID[it.cat]) return it.cat;
-  return guessCategory(it.name);
+  const arvaus = guessCategory(it.name);
+  return CAT_BY_ID[arvaus] ? arvaus : 'muu';
 }
 
 // ============================================================
@@ -844,8 +1014,52 @@ function itemCategory(it){
 //  ja kirjoittavat. Kun TERO opettaa, ISKÄ saa opin heti.
 // ============================================================
 let opitut = {};
-const OPITUT_PEILI = 'kauppalista_opitut_jaettu';
+let omatSanat = {};        // asetuksissa lisätyt hakusanat: sana -> kategoria
+let tuntemattomat = {};    // Muut-osastoon päätyneet nimet
+let ulkoasu = { variotsikot: true, piilotaYksi: true };
+const OPITUT_PEILI = 'kauppalista_jaettu';
 const opitutRef = () => doc(db, 'kauppalista', '_opitut');
+
+// Kaikki jaettu tila kirjoitetaan samaan dokumenttiin, jolloin Firestore-
+// sääntöihin ei tarvitse koskea ja molemmat käyttäjät saavat muutokset heti.
+function tallennaJaettu(osa){
+  writeJSON(OPITUT_PEILI, kokoaJaettu());
+  setDoc(opitutRef(), osa, { merge: true })
+    .catch(err => console.warn('Jaetun tilan tallennus epäonnistui', err));
+}
+function kokoaJaettu(){
+  return { sanat: opitut, kayttajat: KAYTTAJAT, kategoriat: kategoriaAsetukset,
+           sanakirja: omatSanat, tuntemattomat, ulkoasu };
+}
+function otaJaettuKayttoon(d){
+  const puhdas = {};
+  for (const [k, v] of Object.entries(d.sanat || {})){
+    if (v && typeof v === 'object' && v.c) puhdas[k] = v;
+  }
+  opitut = puhdas;
+  if (Array.isArray(d.kayttajat) && d.kayttajat.length){
+    KAYTTAJAT = d.kayttajat
+      .filter(k => k && k.id)
+      .map(k => ({ id: String(k.id), nimi: String(k.nimi || k.id), emoji: String(k.emoji || '👤') }));
+  }
+  if (d.kategoriat && typeof d.kategoriat === 'object'){
+    kategoriaAsetukset = {
+      lisatyt: Array.isArray(d.kategoriat.lisatyt) ? d.kategoriat.lisatyt : [],
+      piilotetut: Array.isArray(d.kategoriat.piilotetut) ? d.kategoriat.piilotetut : [],
+      jarjestys: Array.isArray(d.kategoriat.jarjestys) ? d.kategoriat.jarjestys : []
+    };
+  }
+  omatSanat = (d.sanakirja && typeof d.sanakirja === 'object') ? d.sanakirja : {};
+  tuntemattomat = (d.tuntemattomat && typeof d.tuntemattomat === 'object') ? d.tuntemattomat : {};
+  if (d.ulkoasu && typeof d.ulkoasu === 'object'){
+    ulkoasu = { variotsikot: d.ulkoasu.variotsikot !== false,
+                piilotaYksi: d.ulkoasu.piilotaYksi !== false };
+  }
+  varmistaTilat();
+  rakennaKategoriat();
+  rakennaSanasto();
+  if (!USERS().includes(currentUser)) currentUser = USERS()[0];
+}
 
 function opitutAvain(nimi){
   const n = normName(nimi).replace(/[^a-z0-9äöå]+/g, '_').replace(/^_+|_+$/g, '');
@@ -857,9 +1071,9 @@ function learnCategory(nimi, cat){
   if (!avain || !CAT_BY_ID[cat]) return;
   opitut[avain] = { n: normName(nimi), c: cat, t: Date.now(), by: currentUser };
   arvausMuisti.delete(avain);
-  writeJSON(OPITUT_PEILI, opitut);
-  setDoc(opitutRef(), { sanat: { [avain]: opitut[avain] } }, { merge: true })
-    .catch(err => console.warn('Opit eivät synkronoidu pilveen', err));
+  if (tuntemattomat[avain]){ delete tuntemattomat[avain];
+    tallennaJaettu({ sanat: { [avain]: opitut[avain] }, tuntemattomat: { [avain]: null } }); }
+  else tallennaJaettu({ sanat: { [avain]: opitut[avain] } });
 }
 
 function unlearnCategory(nimi){
@@ -867,28 +1081,19 @@ function unlearnCategory(nimi){
   if (!opitut[avain]) return;
   delete opitut[avain];
   arvausMuisti.delete(avain);
-  writeJSON(OPITUT_PEILI, opitut);
-  setDoc(opitutRef(), { sanat: { [avain]: null } }, { merge: true })
-    .catch(err => console.warn('Opin poisto ei synkronoitunut', err));
+  tallennaJaettu({ sanat: { [avain]: null } });
   render();
 }
 window.unlearnCategory = unlearnCategory;
 
 function subscribeOpitut(){
   onSnapshot(opitutRef(), (snap) => {
-    const data = (snap.exists() && snap.data().sanat) ? snap.data().sanat : {};
-    const puhdas = {};
-    for (const [k, v] of Object.entries(data)){
-      if (v && typeof v === 'object' && CAT_BY_ID[v.c]) puhdas[k] = v;
-    }
-    opitut = puhdas;
-    writeJSON(OPITUT_PEILI, opitut);
-    arvausMuisti.clear();
+    otaJaettuKayttoon(snap.exists() ? (snap.data() || {}) : {});
+    writeJSON(OPITUT_PEILI, kokoaJaettu());
+    USERS().forEach(subscribeUser);
     render();
   }, (err) => {
-    // Esim. puuttuva Firestore-sääntö: opit jäävät tähän puhelimeen,
-    // mutta sovellus toimii muuten normaalisti.
-    console.warn('Jaettuja oppeja ei voitu lukea, käytetään paikallisia', err);
+    console.warn('Jaettua tilaa ei voitu lukea, käytetään paikallisia', err);
   });
 }
 
@@ -896,17 +1101,17 @@ function subscribeOpitut(){
 async function siirraVanhatOpit(){
   if (localStorage.getItem('kauppalista_opit_siirretty')) return;
   const kootut = {};
-  for (const u of USERS){
+  for (const u of USERS()){
     const vanhat = readJSON('kauppalista_opitut_' + u, {});
     for (const [nimi, cat] of Object.entries(vanhat)){
-      if (!CAT_BY_ID[cat]) continue;
+      if (!cat) continue;
       kootut[opitutAvain(nimi)] = { n: nimi, c: cat, t: Date.now(), by: u };
     }
   }
   try { localStorage.setItem('kauppalista_opit_siirretty', '1'); } catch(e){}
   if (!Object.keys(kootut).length) return;
   opitut = { ...kootut, ...opitut };
-  writeJSON(OPITUT_PEILI, opitut);
+  writeJSON(OPITUT_PEILI, kokoaJaettu());
   try { await setDoc(opitutRef(), { sanat: kootut }, { merge: true }); }
   catch(err){ console.warn('Vanhojen oppien siirto ei onnistunut', err); }
 }
@@ -1185,6 +1390,9 @@ function subscribeUser(user){
       });
       lists.sort((a, b) => (a.order - b.order) || a.name.localeCompare(b.name, 'fi'));
 
+      // Käyttäjä on voitu poistaa asetuksista kesken kuuntelun
+      if (!states[user]) return;
+
       if (user === currentUser){
         pendingWrites = snap.metadata.hasPendingWrites;
         refreshStatus();
@@ -1226,7 +1434,7 @@ function setActiveLocal(user, id){
 }
 
 function loadActive(){
-  USERS.forEach(u => {
+  USERS().forEach(u => {
     try { active[u] = localStorage.getItem('kauppalista_active_' + u) || null; } catch(e){ active[u] = null; }
   });
 }
@@ -1252,6 +1460,11 @@ function loadPrefs(){
 let view = 'listat';
 
 function paivitaTopbar(){
+  if (view === 'asetukset'){
+    document.getElementById('topbarNimi').textContent = 'Asetukset';
+    document.getElementById('topbarLuku').textContent = '';
+    return;
+  }
   const lista = findList(getActive());
   if (!lista) return;
   const kaikki = lista.items || [];
@@ -1280,6 +1493,7 @@ function vaihdaNakyma(uusi, suunta){
     document.body.dataset.view = uusi;
     document.body.classList.remove('lisays-auki', 'luonti-auki');
     render();
+    if (uusi === 'asetukset'){ piirraAsetukset(); paivitaTopbar(); }
     window.scrollTo(0, 0);
     paivitaPalkinTausta();
   };
@@ -1302,15 +1516,30 @@ function avaaLista(id){
 window.avaaLista = avaaLista;
 
 function taaksepain(){
-  if (view !== 'lista') return;
-  if (history.state && history.state.v === 'lista'){ history.back(); return; }
+  if (view === 'listat') return;
+  if (history.state && history.state.v){ history.back(); return; }
   vaihdaNakyma('listat', 'taakse');
 }
 window.taaksepain = taaksepain;
 
 window.addEventListener('popstate', () => {
-  if (view === 'lista') vaihdaNakyma('listat', 'taakse');
+  if (view !== 'listat') vaihdaNakyma('listat', 'taakse');
 });
+
+// Määrän säätö napeilla. Toimii myös vapaamuotoisella arvolla ("500 g"),
+// jolloin muutetaan vain alussa olevaa lukua.
+function saadaArvo(arvo, muutos){
+  const m = String(arvo || '').match(/^\s*(\d+)(.*)$/);
+  if (!m) return muutos > 0 ? '1' : String(arvo || '');
+  const uusi = Math.max(1, Math.min(999, parseInt(m[1], 10) + muutos));
+  return uusi + m[2];
+}
+window.saadaMaara = (muutos) => {
+  const el = document.getElementById('itemQty');
+  if (!el) return;
+  el.value = saadaArvo(el.value || '1', muutos);
+  varise(8);
+};
 
 window.avaaLisays = () => {
   document.body.classList.add('lisays-auki');
@@ -1343,7 +1572,7 @@ document.addEventListener('touchend', (e) => {
   if (Date.now() - alku.aika > 600) return;          // hidas veto = ei ele
   if (Math.abs(dx) < 70) return;                      // liian lyhyt
   if (Math.abs(dx) < Math.abs(dy) * 1.8) return;      // enemmän pysty- kuin vaakasuuntaa
-  if (dx > 0 && view === 'lista'){ varise(12); taaksepain(); }
+  if (dx > 0 && view !== 'listat'){ varise(12); taaksepain(); }
   else if (dx < 0 && view === 'listat' && findList(getActive())){ varise(12); avaaLista(getActive()); }
 }, { passive: true });
 
@@ -1351,7 +1580,7 @@ document.addEventListener('touchend', (e) => {
 // KÄYTTÄJÄNVAIHTO
 // ============================
 window.switchUser = (user) => {
-  if (user === currentUser || !USERS.includes(user)) return;
+  if (user === currentUser || !USERS().includes(user)) return;
   cancelEdit(true);
   currentUser = user;
   localStorage.setItem('kauppalista_user', user);
@@ -1361,14 +1590,383 @@ window.switchUser = (user) => {
 };
 
 function updateUserButtons(){
-  USERS.forEach(u => {
-    const btn = document.getElementById('btn-' + u);
-    if (!btn) return;
-    btn.classList.toggle('active', u === currentUser);
-    const count = (states[u].lists || []).reduce(
-      (s, l) => s + (l.items || []).filter(i => !i.done).length, 0);
-    btn.innerHTML = EMOJI[u] + ' ' + u + (count > 0 ? `<span class="user-badge">${count}</span>` : '');
+  const sw = document.getElementById('userSwitcher');
+  if (!sw) return;
+  sw.innerHTML = '';
+  KAYTTAJAT.forEach(k => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'user-btn' + (k.id === currentUser ? ' active' : '');
+    btn.onclick = () => window.switchUser(k.id);
+    const maara = ((states[k.id] || {}).lists || [])
+      .reduce((s2, l) => s2 + (l.items || []).filter(i => !i.done).length, 0);
+    btn.innerHTML = k.emoji + ' ' + k.nimi +
+      (maara > 0 ? `<span class="user-badge">${maara}</span>` : '');
+    sw.appendChild(btn);
   });
+}
+
+
+// ============================================================
+//  ASETUKSET (PIN 3661)
+//  Muutokset tallentuvat jaettuun dokumenttiin, joten ne näkyvät
+//  molemmille käyttäjille. PIN estää vain vahingossa säätämisen.
+// ============================================================
+const PIN = '3661';
+const PIN_MUISTI = 'kauppalista_pin_ok';
+let pinAvattu = false;
+try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
+
+window.avaaAsetukset = () => {
+  try { history.pushState({ v: 'asetukset' }, ''); } catch(e){}
+  vaihdaNakyma('asetukset', 'eteen');
+};
+
+window.tarkistaPin = () => {
+  const el = document.getElementById('pinSyote');
+  const virhe = document.getElementById('pinVirhe');
+  if ((el.value || '').trim() === PIN){
+    pinAvattu = true;
+    try { localStorage.setItem(PIN_MUISTI, '1'); } catch(e){}
+    el.value = ''; virhe.textContent = '';
+    piirraAsetukset();
+  } else {
+    virhe.textContent = 'Väärä PIN-koodi';
+    el.value = '';
+    varise(60);
+  }
+};
+
+function osio(otsikko){
+  const d = document.createElement('div');
+  d.className = 'asetusKortti';
+  d.innerHTML = `<div class="asetusOtsikko">${otsikko}</div>`;
+  return d;
+}
+function rivi(pysty){
+  const d = document.createElement('div');
+  d.className = 'asetusRivi' + (pysty ? ' pysty' : '');
+  return d;
+}
+function kuvaus(teksti, lisa){
+  const d = document.createElement('div');
+  d.className = 'kuvaus';
+  d.textContent = teksti;
+  if (lisa){
+    const l = document.createElement('div');
+    l.className = 'lisatieto'; l.textContent = lisa;
+    d.appendChild(l);
+  }
+  return d;
+}
+function nappi(teksti, luokka, toiminto){
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'pikkuNappi' + (luokka ? ' ' + luokka : '');
+  b.textContent = teksti;
+  b.onclick = toiminto;
+  return b;
+}
+function kytkin(paalla, toiminto){
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'kytkin' + (paalla ? ' paalla' : '');
+  b.setAttribute('role', 'switch');
+  b.setAttribute('aria-checked', paalla ? 'true' : 'false');
+  b.onclick = toiminto;
+  return b;
+}
+
+function piirraAsetukset(){
+  const portti = document.getElementById('pinPortti');
+  const sisalto = document.getElementById('asetusSisalto');
+  if (!portti || !sisalto) return;
+  portti.style.display = pinAvattu ? 'none' : 'block';
+  sisalto.style.display = pinAvattu ? 'block' : 'none';
+  if (!pinAvattu){ sisalto.innerHTML = ''; return; }
+  sisalto.innerHTML = '';
+
+  // ---------- Ulkoasu ----------
+  const u = osio('🎨 Ulkoasu');
+  const r1 = rivi();
+  r1.append(kuvaus('Väritetyt kategoriaotsikot', 'Jokaisella osastolla oma väri'),
+    kytkin(ulkoasu.variotsikot, () => {
+      ulkoasu.variotsikot = !ulkoasu.variotsikot;
+      tallennaJaettu({ ulkoasu }); piirraAsetukset(); render();
+    }));
+  const r2 = rivi();
+  r2.append(kuvaus('Piilota "1 kpl"', 'Näytä määrä vain kun se on yli yhden'),
+    kytkin(ulkoasu.piilotaYksi, () => {
+      ulkoasu.piilotaYksi = !ulkoasu.piilotaYksi;
+      tallennaJaettu({ ulkoasu }); piirraAsetukset(); render();
+    }));
+  u.append(r1, r2);
+  sisalto.appendChild(u);
+
+  // ---------- Käyttäjät ----------
+  const k = osio('👥 Käyttäjät');
+  KAYTTAJAT.forEach((kt) => {
+    const r = rivi(true);
+    const maara = ((states[kt.id] || {}).lists || []).length;
+    r.append(kuvaus(kt.emoji + '  ' + kt.nimi, maara + ' listaa'));
+    r.appendChild(nappi('Muokkaa', '', () => muokkaaKayttaja(kt.id)));
+    if (KAYTTAJAT.length > 1){
+      r.appendChild(nappi('Poista', 'vaara', () => poistaKayttaja(kt.id)));
+    }
+    k.appendChild(r);
+  });
+  const lisaaK = document.createElement('div');
+  lisaaK.className = 'rivinSyotteet';
+  lisaaK.style.marginTop = '14px';
+  lisaaK.innerHTML = `<input class='emojiKentta' id='uusiEmoji' maxlength='4' value='👤'>
+                      <input id='uusiKayttajaNimi' placeholder='Uuden käyttäjän nimi'>`;
+  k.appendChild(lisaaK);
+  const lisaaRivi = rivi();
+  lisaaRivi.appendChild(nappi('+ Lisää käyttäjä', 'paa', lisaaKayttaja));
+  lisaaRivi.firstChild.style.flex = '1';
+  k.appendChild(lisaaRivi);
+  sisalto.appendChild(k);
+
+  // ---------- Kategoriat ----------
+  const kat = osio('🗂️ Kategoriat');
+  const kaikkiKat = [...PERUSKATEGORIAT, ...(kategoriaAsetukset.lisatyt || [])];
+  const piilo = new Set(kategoriaAsetukset.piilotetut || []);
+  const jarjestetyt = [...CATEGORIES, ...kaikkiKat.filter(c => piilo.has(c.id))];
+  jarjestetyt.forEach((c, i) => {
+    if (c.id === 'muu') return;
+    const r = rivi(true);
+    const vp = document.createElement('div');
+    vp.className = 'varipala'; vp.style.background = c.color || '#888';
+    r.appendChild(vp);
+    r.appendChild(kuvaus(c.icon + '  ' + c.name, piilo.has(c.id) ? 'piilotettu' : null));
+    if (!piilo.has(c.id)){
+      const ylos = nappi('▲', '', () => siirraKategoria(c.id, -1));
+      const alas = nappi('▼', '', () => siirraKategoria(c.id, 1));
+      ylos.style.flex = '0 0 54px'; alas.style.flex = '0 0 54px';
+      r.append(ylos, alas);
+    }
+    r.appendChild(nappi(piilo.has(c.id) ? 'Näytä' : 'Piilota', '',
+      () => piilotaKategoria(c.id, !piilo.has(c.id))));
+    if ((kategoriaAsetukset.lisatyt || []).some(x => x.id === c.id)){
+      r.appendChild(nappi('Poista', 'vaara', () => poistaKategoria(c.id)));
+    }
+    kat.appendChild(r);
+  });
+  const lisaaKat = document.createElement('div');
+  lisaaKat.className = 'rivinSyotteet';
+  lisaaKat.style.marginTop = '14px';
+  lisaaKat.innerHTML = `<input class='emojiKentta' id='uusiKatIkoni' maxlength='4' value='🛒'>
+                        <input id='uusiKatNimi' placeholder='Uuden kategorian nimi'>`;
+  kat.appendChild(lisaaKat);
+  const katRivi = rivi();
+  katRivi.appendChild(nappi('+ Lisää kategoria', 'paa', lisaaKategoria));
+  katRivi.firstChild.style.flex = '1';
+  kat.appendChild(katRivi);
+  sisalto.appendChild(kat);
+
+  // ---------- Tuntemattomat tuotteet ----------
+  const t = osio('❓ Tunnistamattomat');
+  const lista = Object.entries(tuntemattomat)
+    .sort((a, b) => (b[1].kerrat || 0) - (a[1].kerrat || 0) || (b[1].t || 0) - (a[1].t || 0));
+  if (!lista.length){
+    t.insertAdjacentHTML('beforeend',
+      `<div class='tyhjaOsio'>Ei tunnistamattomia tuotteita. Kun lisäät tuotteen jota sanakirja ei tunne, se ilmestyy tähän.</div>`);
+  } else {
+    t.insertAdjacentHTML('beforeend',
+      `<p class='asetusTeksti'>Nämä päätyivät Muut-osastoon. Valitse oikea osasto, niin sovellus muistaa sen jatkossa molemmille.</p>`);
+    lista.slice(0, 40).forEach(([avain, tieto]) => {
+      const r = rivi(true);
+      r.appendChild(kuvaus((tieto.n || avain).toUpperCase(),
+        (tieto.kerrat || 1) + ' kertaa lisätty'));
+      const sel = document.createElement('select');
+      sel.style.flex = '0 0 auto'; sel.style.maxWidth = '150px';
+      sel.innerHTML = `<option value=''>Valitse…</option>` +
+        CATEGORIES.filter(c => c.id !== 'muu')
+          .map(c => `<option value='${c.id}'>${c.icon} ${c.name}</option>`).join('');
+      sel.onchange = () => {
+        if (!sel.value) return;
+        learnCategory(tieto.n || avain, sel.value);
+        piirraAsetukset(); render();
+      };
+      r.appendChild(sel);
+      const poistoNappi = nappi('✕', 'vaara', () => {
+        delete tuntemattomat[avain];
+        tallennaJaettu({ tuntemattomat: { [avain]: null } });
+        piirraAsetukset();
+      });
+      poistoNappi.style.flex = '0 0 54px';
+      r.appendChild(poistoNappi);
+      t.appendChild(r);
+    });
+  }
+  sisalto.appendChild(t);
+
+  // ---------- Sanakirja ----------
+  const sk = osio('📖 Oma sanakirja');
+  sk.insertAdjacentHTML('beforeend',
+    `<p class='asetusTeksti'>Lisää hakusana ja sen osasto. Sana löytyy myös yhdyssanan osana, esimerkiksi "pepperoni" tunnistaa myös pepperonipizzan.</p>`);
+  const skSyote = document.createElement('div');
+  skSyote.className = 'rivinSyotteet';
+  skSyote.innerHTML = `<input id='uusiSana' placeholder='Hakusana'>`;
+  const skSel = document.createElement('select');
+  skSel.id = 'uusiSanaKat';
+  skSel.style.flex = '0 0 140px';
+  skSel.innerHTML = CATEGORIES.filter(c => c.id !== 'muu')
+    .map(c => `<option value='${c.id}'>${c.icon} ${c.name}</option>`).join('');
+  skSyote.appendChild(skSel);
+  sk.appendChild(skSyote);
+  const skRivi = rivi();
+  skRivi.appendChild(nappi('+ Lisää sana', 'paa', lisaaSana));
+  skRivi.firstChild.style.flex = '1';
+  sk.appendChild(skRivi);
+
+  const omat = Object.entries(omatSanat);
+  if (omat.length){
+    omat.sort((a, b) => a[0].localeCompare(b[0], 'fi')).forEach(([sana, cat]) => {
+      const r = rivi(true);
+      const c = CAT_BY_ID[cat] || { icon: '📦', name: 'Muut' };
+      r.appendChild(kuvaus(sana, c.icon + ' ' + c.name));
+      r.appendChild(nappi('Poista', 'vaara', () => poistaSana(sana)));
+      sk.appendChild(r);
+    });
+  }
+  sisalto.appendChild(sk);
+
+  // ---------- Opitut ----------
+  const op = osio('🧠 Opitut tuotteet');
+  const opit = Object.entries(opitut);
+  if (!opit.length){
+    op.insertAdjacentHTML('beforeend',
+      `<div class='tyhjaOsio'>Ei opittuja. Kun vaihdat tuotteen osastoa muokkausnäkymässä, valinta muistetaan tässä.</div>`);
+  } else {
+    opit.sort((a, b) => (b[1].t || 0) - (a[1].t || 0)).slice(0, 40).forEach(([avain, v]) => {
+      const r = rivi(true);
+      const c = CAT_BY_ID[v.c] || { icon: '📦', name: 'Muut' };
+      r.appendChild(kuvaus((v.n || avain).toUpperCase(),
+        c.icon + ' ' + c.name + (v.by ? '  ·  ' + kayttaja(v.by).nimi : '')));
+      r.appendChild(nappi('Unohda', 'vaara', () => {
+        window.unlearnCategory(v.n || avain); piirraAsetukset();
+      }));
+      op.appendChild(r);
+    });
+  }
+  sisalto.appendChild(op);
+
+  // ---------- Lukitus ----------
+  const l = osio('🔒 Lukitus');
+  const lr = rivi();
+  lr.append(kuvaus('Lukitse asetukset', 'PIN kysytään seuraavalla kerralla'),
+    nappi('Lukitse', '', () => {
+      pinAvattu = false;
+      try { localStorage.removeItem(PIN_MUISTI); } catch(e){}
+      piirraAsetukset();
+    }));
+  l.appendChild(lr);
+  sisalto.appendChild(l);
+}
+
+// ---------- Asetusten toiminnot ----------
+function lisaaKayttaja(){
+  const nimi = (document.getElementById('uusiKayttajaNimi').value || '').trim().toUpperCase();
+  const emoji = (document.getElementById('uusiEmoji').value || '👤').trim() || '👤';
+  if (!nimi) return;
+  if (KAYTTAJAT.some(k => k.nimi === nimi)) return;
+  KAYTTAJAT = [...KAYTTAJAT, { id: 'k' + rid(), nimi, emoji }];
+  varmistaTilat();
+  tallennaJaettu({ kayttajat: KAYTTAJAT });
+  USERS().forEach(subscribeUser);
+  piirraAsetukset(); render();
+}
+
+function muokkaaKayttaja(id){
+  const k = kayttaja(id);
+  const nimi = (prompt('Käyttäjän nimi', k.nimi) || '').trim().toUpperCase();
+  if (!nimi) return;
+  const emoji = (prompt('Emoji', k.emoji) || k.emoji).trim() || k.emoji;
+  KAYTTAJAT = KAYTTAJAT.map(x => x.id === id ? { ...x, nimi, emoji } : x);
+  tallennaJaettu({ kayttajat: KAYTTAJAT });
+  piirraAsetukset(); render();
+}
+
+async function poistaKayttaja(id){
+  const k = kayttaja(id);
+  const listat = ((states[id] || {}).lists || []).length;
+  if (!confirm(`Poistetaanko ${k.nimi} ja hänen ${listat} listaansa pysyvästi?`)) return;
+  // Listat poistetaan pysyvästi, kuten sovittiin
+  for (const l of ((states[id] || {}).lists || [])){
+    try { await deleteDoc(listRef(id, l.id)); } catch(e){ console.warn(e); }
+  }
+  if (unsubs[id]){ try { unsubs[id](); } catch(e){} delete unsubs[id]; }
+  delete states[id]; delete active[id]; delete lastSig[id];
+  try { localStorage.removeItem('kauppalista_mirror_' + id); } catch(e){}
+  KAYTTAJAT = KAYTTAJAT.filter(x => x.id !== id);
+  if (currentUser === id) currentUser = USERS()[0];
+  varmistaTilat();
+  tallennaJaettu({ kayttajat: KAYTTAJAT });
+  piirraAsetukset(); render();
+}
+
+function lisaaKategoria(){
+  const nimi = (document.getElementById('uusiKatNimi').value || '').trim();
+  const ikoni = (document.getElementById('uusiKatIkoni').value || '🛒').trim() || '🛒';
+  if (!nimi) return;
+  const kaikki = [...PERUSKATEGORIAT, ...(kategoriaAsetukset.lisatyt || [])];
+  const uusi = { id: 'c' + rid(), name: nimi, icon: ikoni,
+                 color: VARIPALETTI[kaikki.length % VARIPALETTI.length] };
+  kategoriaAsetukset.lisatyt = [...(kategoriaAsetukset.lisatyt || []), uusi];
+  rakennaKategoriat();
+  tallennaJaettu({ kategoriat: kategoriaAsetukset });
+  document.getElementById('uusiKatNimi').value = '';
+  piirraAsetukset(); render();
+}
+
+function piilotaKategoria(id, piilota){
+  const nyt = new Set(kategoriaAsetukset.piilotetut || []);
+  if (piilota) nyt.add(id); else nyt.delete(id);
+  kategoriaAsetukset.piilotetut = [...nyt];
+  rakennaKategoriat();
+  tallennaJaettu({ kategoriat: kategoriaAsetukset });
+  piirraAsetukset(); render();
+}
+
+function poistaKategoria(id){
+  if (!confirm('Poistetaanko kategoria? Sen tuotteet siirtyvät Muut-osastoon.')) return;
+  kategoriaAsetukset.lisatyt = (kategoriaAsetukset.lisatyt || []).filter(c => c.id !== id);
+  kategoriaAsetukset.piilotetut = (kategoriaAsetukset.piilotetut || []).filter(x => x !== id);
+  kategoriaAsetukset.jarjestys = (kategoriaAsetukset.jarjestys || []).filter(x => x !== id);
+  rakennaKategoriat();
+  tallennaJaettu({ kategoriat: kategoriaAsetukset });
+  piirraAsetukset(); render();
+}
+
+function siirraKategoria(id, suunta){
+  const nyt = CATEGORIES.filter(c => c.id !== 'muu').map(c => c.id);
+  const i = nyt.indexOf(id);
+  const j = i + suunta;
+  if (i === -1 || j < 0 || j >= nyt.length) return;
+  nyt.splice(j, 0, nyt.splice(i, 1)[0]);
+  kategoriaAsetukset.jarjestys = nyt;
+  rakennaKategoriat();
+  tallennaJaettu({ kategoriat: kategoriaAsetukset });
+  piirraAsetukset(); render();
+}
+
+function lisaaSana(){
+  const sana = normName(document.getElementById('uusiSana').value || '');
+  const cat = document.getElementById('uusiSanaKat').value;
+  if (!sana || !CAT_BY_ID[cat]) return;
+  omatSanat[sana] = cat;
+  rakennaSanasto();
+  tallennaJaettu({ sanakirja: { [sana]: cat } });
+  document.getElementById('uusiSana').value = '';
+  piirraAsetukset(); render();
+}
+
+function poistaSana(sana){
+  delete omatSanat[sana];
+  rakennaSanasto();
+  tallennaJaettu({ sanakirja: { [sana]: null } });
+  piirraAsetukset(); render();
 }
 
 // ============================
@@ -1417,6 +2015,16 @@ function addNamed(rawName, rawQty){
   const fieldQty = qtyEl ? qtyEl.value.trim() : '';
   const qty = String(rawQty ?? (fieldQty || '1'));
   const cat = guessCategory(name);
+
+  // Kerätään nimet joita sanakirja ei tunnista, jotta ne voi opettaa asetuksissa
+  if (cat === 'muu'){
+    const avain = opitutAvain(name);
+    if (!opitut[avain]){
+      const edell = tuntemattomat[avain] || { kerrat: 0 };
+      tuntemattomat[avain] = { n: normName(name), kerrat: (edell.kerrat || 0) + 1, t: Date.now() };
+      tallennaJaettu({ tuntemattomat: { [avain]: tuntemattomat[avain] } });
+    }
+  }
 
   list.items.push({ id: rid(), name, qty, done: false, cat });
   recordHistory(name, cat);
@@ -1583,7 +2191,13 @@ function buildEditRow(it){
   grid.className = 'editGrid';
 
   const qtyBox = document.createElement('div');
-  qtyBox.className = 'qtyBox';
+  qtyBox.className = 'qtyBox maaraSaadin';
+  const vahenna = document.createElement('button');
+  vahenna.type = 'button'; vahenna.className = 'maaraNappi';
+  vahenna.innerHTML = '&minus;'; vahenna.setAttribute('aria-label', 'Vähennä');
+  const lisaaNappi = document.createElement('button');
+  lisaaNappi.type = 'button'; lisaaNappi.className = 'maaraNappi';
+  lisaaNappi.textContent = '+'; lisaaNappi.setAttribute('aria-label', 'Lisää');
   const qtyIn = document.createElement('input');
   qtyIn.type = 'text';
   qtyIn.value = editBuf.qty;
@@ -1591,7 +2205,9 @@ function buildEditRow(it){
   qtyIn.placeholder = 'Määrä';
   qtyIn.oninput = () => { editBuf.qty = qtyIn.value; };
   qtyIn.onkeydown = (e) => { if (e.key === 'Enter') window.saveEdit(); if (e.key === 'Escape') window.cancelEdit(); };
-  qtyBox.appendChild(qtyIn);
+  vahenna.onclick = () => { qtyIn.value = saadaArvo(qtyIn.value, -1); editBuf.qty = qtyIn.value; varise(8); };
+  lisaaNappi.onclick = () => { qtyIn.value = saadaArvo(qtyIn.value, 1); editBuf.qty = qtyIn.value; varise(8); };
+  qtyBox.append(vahenna, qtyIn, lisaaNappi);
 
   const catBox = document.createElement('div');
   catBox.className = 'catBox';
@@ -1694,8 +2310,10 @@ function buildItemRow(it){
   const oikea = document.createElement('div');
   oikea.className = 'rowBtns';
 
+  // Yksi kappale on oletus, joten sen näyttäminen on turhaa kohinaa
   const qty = String(it.qty ?? '').trim();
-  if (qty){
+  const naytaMaara = qty && !(ulkoasu.piilotaYksi && (qty === '1' || qty === '1 kpl'));
+  if (naytaMaara){
     const qp = document.createElement('div');
     qp.className = 'kpl' + (it.done ? ' done' : '');
     qp.textContent = /^\d+$/.test(qty) ? qty + ' kpl' : qty;
@@ -1707,11 +2325,17 @@ function buildItemRow(it){
   return r;
 }
 
-function catHeader(icon, text, count){
+function catHeader(icon, text, count, vari){
   const h = document.createElement('div');
   h.className = 'catHeader';
   h.innerHTML = `<span class="catIcon">${icon}</span><span>${text}</span>` +
                 `<span class="catLine"></span><span class="catCount">${count}</span>`;
+  if (vari && ulkoasu.variotsikot){
+    h.style.color = vari;
+    h.querySelector('.catLine').style.background =
+      `linear-gradient(90deg, ${vari}55, transparent)`;
+    h.querySelector('.catCount').style.color = vari + 'aa';
+  }
   return h;
 }
 
@@ -1801,7 +2425,7 @@ function render(){
   CATEGORIES.forEach(c => {
     const group = groups.get(c.id);
     if (!group || !group.length) return;
-    items.appendChild(catHeader(c.icon, c.name, group.length));
+    items.appendChild(catHeader(c.icon, c.name, group.length, c.color));
     group.forEach(it => items.appendChild(buildItemRow(it)));
   });
 
@@ -1862,8 +2486,8 @@ function wireInputs(){
 async function init(){
   loadActive();
   loadPrefs();
-  USERS.forEach(mirrorRead);
-  opitut = readJSON(OPITUT_PEILI, {});   // heti käyttöön, päivittyy pilvestä
+  USERS().forEach(mirrorRead);
+  otaJaettuKayttoon(readJSON(OPITUT_PEILI, {}));   // heti käyttöön, päivittyy pilvestä
   wireInputs();
   // Avataan suoraan viimeksi käytetty lista, mutta jätetään historiaan
   // paluupiste, jotta takaisin-ele vie listoihin eikä ulos sovelluksesta.
@@ -1878,8 +2502,16 @@ async function init(){
   subscribeOpitut();
   siirraVanhatOpit();
 
-  for (const u of USERS) await migrateIfNeeded(u);
-  USERS.forEach(subscribeUser);
+  for (const u of USERS()) await migrateIfNeeded(u);
+  USERS().forEach(subscribeUser);
+  // Siirtymä voi palauttaa aiemmin auki olleen listan vasta tässä vaiheessa,
+  // joten näkymä ja piirto päivitetään sen jälkeen.
+  if (view === 'listat' && getActive()){
+    view = 'lista';
+    document.body.dataset.view = 'lista';
+    try { history.pushState({ v: 'lista' }, ''); } catch(e){}
+  }
+  render();
   ready = true;
   refreshStatus();
 }
