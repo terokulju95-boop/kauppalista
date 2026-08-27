@@ -163,7 +163,27 @@ button:active{transform:translateY(0) scale(0.98);}
 .item.doneState{opacity:0.5;background:rgba(20,40,20,0.4);}
 .item.doneState::before{background:linear-gradient(180deg,#4ade80,#22c55e);}
 .name{font-size:18px;font-weight:600;transition:all 0.3s ease;flex:1;letter-spacing:0.5px;}
-.done{text-decoration:line-through;opacity:0.6;}
+/* Yliviivaus piirretään taustagradienttina, ei text-decorationilla:
+   line-through ei ole animoitavissa, background-size on.
+   box-decoration-break:clone pitää viivan oikean mittaisena silloinkin
+   kun pitkä nimi rivittyy kahdelle riville. */
+.done{text-decoration:none;opacity:0.6;}
+.viivaus{
+  background-image:linear-gradient(currentColor,currentColor);
+  background-repeat:no-repeat;
+  background-position:0 58%;
+  background-size:0 2px;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.done .viivaus{background-size:100% 2px;}
+/* .odottaa asetetaan riviä rakennettaessa, .piirra vasta kun rivin
+   siirtymä ostettuihin on valmis. Ilman odottaa-tilaa viiva välähtäisi
+   täytenä ennen kuin animaatio alkaisi nollasta. */
+.done.odottaa .viivaus{background-size:0 2px;}
+.done.piirra .viivaus{
+  animation:yliviivaus var(--yliviivaus-kesto,200ms) cubic-bezier(0.25,0.8,0.3,1) forwards;
+}
+@keyframes yliviivaus{from{background-size:0 2px;}to{background-size:100% 2px;}}
 .kpl{
   opacity:0.7;margin-right:14px;font-size:15px;font-weight:600;color:#a0a0a0;
   transition:all 0.3s ease;padding:6px 12px;background:rgba(255,255,255,0.05);border-radius:8px;
@@ -1268,12 +1288,29 @@ const PAINALLUS_VAIHTOEHDOT = [
 const PAINALLUS_OLETUS = 500;
 const kelpaakoPainallus = (v) => PAINALLUS_VAIHTOEHDOT.some(o => o.arvo === v);
 
-let ulkoasu = { variotsikot: true, piilotaYksi: true, painallusMs: PAINALLUS_OLETUS };
+// ------------------------------------------------------------------
+//  YLIVIIVAUKSEN PIIRTYMISAIKA
+//  Myös jaettu, samasta syystä kuin painalluksen kesto.
+// ------------------------------------------------------------------
+const YLIVIIVAUS_VAIHTOEHDOT = [
+  { arvo:  200, teksti: '0,2 s' },
+  { arvo:  400, teksti: '0,4 s' },
+  { arvo:  600, teksti: '0,6 s' },
+  { arvo:  800, teksti: '0,8 s' },
+  { arvo: 1000, teksti: '1,0 s' }
+];
+const YLIVIIVAUS_OLETUS = 200;
+const kelpaakoYliviivaus = (v) => YLIVIIVAUS_VAIHTOEHDOT.some(o => o.arvo === v);
+
+let ulkoasu = { variotsikot: true, piilotaYksi: true,
+                painallusMs: PAINALLUS_OLETUS, yliviivausMs: YLIVIIVAUS_OLETUS };
 
 // Luetaan vasta painalluksen alkaessa, jotta muutos otetaan kayttoon heti
 // ilman etta kuuntelijoita tarvitsee kiinnittaa uudelleen.
 const painallusKesto = () =>
   kelpaakoPainallus(ulkoasu.painallusMs) ? ulkoasu.painallusMs : PAINALLUS_OLETUS;
+const yliviivausKesto = () =>
+  kelpaakoYliviivaus(ulkoasu.yliviivausMs) ? ulkoasu.yliviivausMs : YLIVIIVAUS_OLETUS;
 let jaettuSig = { kategoriat: null, sanakirja: null, nakyva: null };
 const OPITUT_PEILI = 'kauppalista_jaettu';
 const opitutRef = () => doc(db, 'kauppalista', '_opitut');
@@ -1316,7 +1353,9 @@ function otaJaettuKayttoon(d){
     ulkoasu = { variotsikot: d.ulkoasu.variotsikot !== false,
                 piilotaYksi: d.ulkoasu.piilotaYksi !== false,
                 painallusMs: kelpaakoPainallus(d.ulkoasu.painallusMs)
-                  ? d.ulkoasu.painallusMs : PAINALLUS_OLETUS };
+                  ? d.ulkoasu.painallusMs : PAINALLUS_OLETUS,
+                yliviivausMs: kelpaakoYliviivaus(d.ulkoasu.yliviivausMs)
+                  ? d.ulkoasu.yliviivausMs : YLIVIIVAUS_OLETUS };
   }
   varmistaTilat();
   // Sanaston ja kategorioiden uudelleenrakennus tyhjentää arvausvälimuistin,
@@ -1941,7 +1980,7 @@ const PIN = '3661';
 //  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
 //  pyorii eri versio kuin luulet.
 // ============================================================
-const SOVELLUS_VERSIO = '5.1.0';
+const SOVELLUS_VERSIO = '5.2.0';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
@@ -1977,6 +2016,49 @@ const KEHITYS_MUISTI = 'kauppalista_kehitys';
 let kehitysTila = false;
 try { kehitysTila = localStorage.getItem(KEHITYS_MUISTI) === '1'; } catch(e){}
 let kehitysNapautukset = 0, kehitysAjastin = null;
+
+// ------------------------------------------------------------------
+//  FIRESTORE-DOKUMENTIN KOKO
+//  Kaikki jaettu tila on yhdessa dokumentissa (kauppalista/_opitut).
+//  Firestoren yksikkokoraja on 1 MiB. Arvio lasketaan Firestoren omalla
+//  saannolla: merkkijono = UTF-8-tavut + 1, luku = 8, totuusarvo = 1,
+//  kentan nimi = UTF-8-tavut + 1. Se ei ole tarkalleen sama kuin JSON-koko,
+//  eika ota huomioon indeksointia – siksi 'arvio'.
+//  https://firebase.google.com/docs/firestore/storage-size
+// ------------------------------------------------------------------
+const FIRESTORE_RAJA = 1048576;          // 1 MiB
+const FIRESTORE_VAROITUS = 512000;       // 500 kB
+const teEnc = new TextEncoder();
+const utf8Pituus = (t) => teEnc.encode(String(t)).length;
+
+function arvioiKentanKoko(arvo){
+  if (arvo === null || arvo === undefined) return 1;
+  const t = typeof arvo;
+  if (t === 'boolean') return 1;
+  if (t === 'number') return 8;
+  if (t === 'string') return utf8Pituus(arvo) + 1;
+  if (arvo instanceof Date) return 8;
+  if (Array.isArray(arvo)) return arvo.reduce((s, v) => s + arvioiKentanKoko(v), 0);
+  let s = 0;
+  for (const [k, v] of Object.entries(arvo)){
+    if (v === undefined) continue;       // Firestore ei tallenna undefinedia
+    s += utf8Pituus(k) + 1 + arvioiKentanKoko(v);
+  }
+  return s;
+}
+
+// Palauttaa kokonaiskoon ja kenttakohtaisen erittelyn suurin ensin,
+// jotta nakee heti mika osa dokumentista kasvaa.
+function jaetunKoko(){
+  const jaettu = kokoaJaettu();
+  const kentat = Object.entries(jaettu)
+    .map(([k, v]) => ({ nimi: k, tavuja: utf8Pituus(k) + 1 + arvioiKentanKoko(v) }))
+    .sort((a, b) => b.tavuja - a.tavuja);
+  // Dokumentin nimi + 32 tavun kiinteä lisä, kuten Firestore laskee.
+  const nimiTavut = utf8Pituus('kauppalista') + 1 + utf8Pituus('_opitut') + 1 + 16;
+  const yhteensa = kentat.reduce((s, k) => s + k.tavuja, 0) + nimiTavut + 32;
+  return { yhteensa, kentat, osuus: yhteensa / FIRESTORE_RAJA };
+}
 
 function kokoTeksti(t){
   if (t === null || t === undefined) return '–';
@@ -2057,6 +2139,7 @@ async function keraaDiagnostiikka(){
     tallennusKiintio: arvio.quota,
     lsTavuja: ls.tavuja,
     lsAvaimia: ls.avaimia,
+    jaettu: jaetunKoko(),
     verkossa: navigator.onLine,
     odottaviaKirjoituksia: !!pendingWrites,
     kuuntelijoita: Object.keys(unsubs).length,
@@ -2141,6 +2224,16 @@ function piirraKehitysOsio(sisalto){
     K('Selaimen tallennustila', kokoTeksti(t.tallennusKaytto),
       t.tallennusKiintio ? 'kiintiöstä ' + kokoTeksti(t.tallennusKiintio) : null);
     K('localStorage', kokoTeksti(t.lsTavuja), t.lsAvaimia + ' avainta');
+
+    // ---- Jaettu Firestore-dokumentti ----
+    const j = t.jaettu;
+    const pros = (j.osuus * 100);
+    const varoita = j.yhteensa >= FIRESTORE_VAROITUS;
+    K('Jaettu dokumentti', kokoTeksti(j.yhteensa),
+      pros.toFixed(1) + ' % Firestoren 1 MiB rajasta' +
+      (varoita ? ' – aika karsia tuntemattomia tai historiaa' : ''), varoita);
+    j.kentat.forEach(k => K('  · ' + k.nimi, kokoTeksti(k.tavuja),
+      j.yhteensa ? (k.tavuja / j.yhteensa * 100).toFixed(0) + ' % dokumentista' : null));
     if (!t.valimuistit.length) K('Välimuistit', 'ei yhtään', null, true);
     t.valimuistit.forEach(c =>
       K(c.nimi, c.tiedostoja < 0 ? 'ei luettavissa' : c.tiedostoja + ' tiedostoa'));
@@ -2348,7 +2441,18 @@ function piirraAsetukset(){
       varise(12);
       piirraAsetukset();
     }));
-  u.append(r1, r2, r3);
+  const r4 = rivi(true);
+  r4.style.paddingLeft = '0';
+  r4.append(kuvaus('Yliviivauksen piirtymisaika',
+    'Kuinka hitaasti viiva vedetään ostetun tuotteen yli'),
+    valintaRyhma(YLIVIIVAUS_VAIHTOEHDOT, yliviivausKesto(), (arvo) => {
+      ulkoasu.yliviivausMs = arvo;
+      tallennaJaettu({ ulkoasu });
+      varise(12);
+      piirraAsetukset();
+    }));
+
+  u.append(r1, r2, r3, r4);
   sisalto.appendChild(u);
 
   // ---------- Käyttäjät ----------
@@ -2807,7 +2911,23 @@ window.toggleDoneSection = () => {
 // ============================
 // RENDER
 // ============================
+// Käynnistää yliviivauksen piirtymisen yhdellä rivillä.
+// Ajetaan vasta kun rivin siirtymä ostettuihin on valmis: view transition
+// piilottaa oikean elementin siirtymän ajaksi, joten sen aikana alkanut
+// animaatio jäisi osittain näkemättä.
+function piirraYliviivaus(id){
+  if (!id || reduceMotion) return;
+  const rivi = document.getElementById('item-' + id);
+  if (!rivi) return;                       // esim. ostetut piilotettuna
+  rivi.style.setProperty('--yliviivaus-kesto', yliviivausKesto() + 'ms');
+  rivi.querySelectorAll('.odottaa').forEach(el => {
+    el.classList.remove('odottaa');
+    el.classList.add('piirra');
+  });
+}
+
 function renderAnimated(){
+  const kohde = vtTarget;                  // vapauta() nollaa tämän
   if (!reduceMotion && document.startViewTransition){
     try {
       const t = document.startViewTransition(() => render());
@@ -2817,13 +2937,18 @@ function renderAnimated(){
         document.querySelectorAll('#items .item').forEach(el => {
           if (el.style.viewTransitionName) el.style.viewTransitionName = '';
         });
+        piirraYliviivaus(kohde);
       };
       t.finished.then(vapauta, vapauta);
       return;
     } catch(e){}
   }
-  vtTarget = null;
+  // Varapolku selaimille joista View Transitions puuttuu (mm. Firefox).
+  // vtTarget on nollattava vasta renderin JÄLKEEN: buildItemRow lukee sitä
+  // päättäessään mille riville yliviivaus jätetään odottamaan.
   render();
+  vtTarget = null;
+  piirraYliviivaus(kohde);
 }
 
 function buildEditRow(it){
@@ -2979,9 +3104,19 @@ function buildItemRow(it){
   r.setAttribute('role', 'button');
   r.setAttribute('aria-label', it.name + (it.done ? ', ostettu' : ''));
 
+  // Rivi joka juuri rastitettiin: viiva jätetään nollaan kunnes siirtymä
+  // ostettuihin on ohi, jolloin piirraYliviivaus käynnistää animaation.
+  const piirtyy = it.done && !reduceMotion && vtTarget === it.id;
+  const odottaa = piirtyy ? ' odottaa' : '';
+
   const nm = document.createElement('div');
-  nm.className = 'name' + (it.done ? ' done' : '');
-  nm.textContent = it.done ? '✓ ' + it.name : it.name;
+  nm.className = 'name' + (it.done ? ' done' : '') + odottaa;
+  // Ruksi jää viivan ulkopuolelle, muuten se yliviivautuisi itsekin.
+  if (it.done) nm.appendChild(document.createTextNode('✓ '));
+  const nimiTeksti = document.createElement('span');
+  nimiTeksti.className = 'viivaus';
+  nimiTeksti.textContent = it.name;
+  nm.appendChild(nimiTeksti);
 
   const oikea = document.createElement('div');
   oikea.className = 'rowBtns';
@@ -2991,8 +3126,11 @@ function buildItemRow(it){
   const naytaMaara = qty && !(ulkoasu.piilotaYksi && (qty === '1' || qty === '1 kpl'));
   if (naytaMaara){
     const qp = document.createElement('div');
-    qp.className = 'kpl' + (it.done ? ' done' : '');
-    qp.textContent = /^\d+$/.test(qty) ? qty + ' kpl' : qty;
+    qp.className = 'kpl' + (it.done ? ' done' : '') + odottaa;
+    const qTeksti = document.createElement('span');
+    qTeksti.className = 'viivaus';
+    qTeksti.textContent = /^\d+$/.test(qty) ? qty + ' kpl' : qty;
+    qp.appendChild(qTeksti);
     oikea.appendChild(qp);
   }
 
