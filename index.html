@@ -1468,7 +1468,8 @@ const TEEMAT = [
 const TEEMA_OLETUS = 'oletus';
 const kelpaakoTeema = (v) => TEEMAT.some(t => t.arvo === v);
 
-let ulkoasu = { variotsikot: true, piilotaYksi: true, teema: TEEMA_OLETUS, viivakoodi: false,
+let ulkoasu = { variotsikot: true, piilotaYksi: true, teema: TEEMA_OLETUS,
+                viivakoodi: false, verkkohaku: true,
                 painallusMs: PAINALLUS_OLETUS, yliviivausMs: YLIVIIVAUS_OLETUS };
 
 // Teema ja skannerinappi luetaan suoraan ulkoasu-oliosta, joten yksi
@@ -1567,6 +1568,7 @@ function otaJaettuKayttoon(d, pilvesta){
                 piilotaYksi: d.ulkoasu.piilotaYksi !== false,
                 teema: kelpaakoTeema(d.ulkoasu.teema) ? d.ulkoasu.teema : TEEMA_OLETUS,
                 viivakoodi: d.ulkoasu.viivakoodi === true,
+                verkkohaku: d.ulkoasu.verkkohaku !== false,
                 painallusMs: kelpaakoPainallus(d.ulkoasu.painallusMs)
                   ? d.ulkoasu.painallusMs : PAINALLUS_OLETUS,
                 yliviivausMs: kelpaakoYliviivaus(d.ulkoasu.yliviivausMs)
@@ -2203,7 +2205,7 @@ const PIN = '3661';
 //  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
 //  pyorii eri versio kuin luulet.
 // ============================================================
-const SOVELLUS_VERSIO = '5.3.1';
+const SOVELLUS_VERSIO = '5.4.0';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
@@ -2950,12 +2952,28 @@ function osioViivakoodi(sisalto){
     return;
   }
 
+  const rVerkko = rivi();
+  rVerkko.append(kuvaus('Hae tuotenimi verkosta',
+    'Tuntematon koodi tarkistetaan Open Food Facts -tietokannasta'),
+    kytkin(ulkoasu.verkkohaku, () => {
+      ulkoasu.verkkohaku = !ulkoasu.verkkohaku;
+      tallennaJaettu({ ulkoasu });
+      piirraAsetukset();
+    }));
+  v.appendChild(rVerkko);
+
+  // Selitys verkkohausta näkyy aina kun kytkin on päällä, myös selaimessa
+  // joka ei osaa lukea koodeja: muuten kytkimen vieressä ei lukisi mitä se tekee.
   if (!skanneriTuettu()){
     v.insertAdjacentHTML('beforeend',
       `<p class='asetusTeksti' style='color:#ff8a8a;'>Tämä selain ei osaa lukea viivakoodeja. Toiminto vaatii Chromen Androidilla.</p>`);
+  }
+  if (ulkoasu.verkkohaku){
+    v.insertAdjacentHTML('beforeend',
+      `<p class='asetusTeksti'>Verkkohaku lähettää pelkän viivakoodin numeron Open Food Factsiin ja ehdottaa löytynyttä nimeä. Nimi tallentuu vasta kun hyväksyt sen, ja sen jälkeen koodi tunnistuu heti — myös ilman verkkoa ja toisen käyttäjän puhelimessa. Kauppojen omat merkit puuttuvat tietokannasta usein, jolloin nimi kysytään kuten ennenkin.</p>`);
   } else {
     v.insertAdjacentHTML('beforeend',
-      `<p class='asetusTeksti'>Tuntemattoman koodin kohdalla sovellus kysyy tuotteen nimen kerran. Sen jälkeen sama koodi tunnistuu myös toisen käyttäjän puhelimessa.</p>`);
+      `<p class='asetusTeksti'>Verkkohaku on pois päältä, joten jokaisen uuden koodin nimi kysytään kerran. Sen jälkeen sama koodi tunnistuu myös toisen käyttäjän puhelimessa.</p>`);
   }
 
   const koodit = Object.entries(viivakoodit)
@@ -2967,7 +2985,8 @@ function osioViivakoodi(sisalto){
   } else {
     koodit.slice(0, 40).forEach(([koodi, tieto]) => {
       const kr = rivi(true);
-      kr.appendChild(kuvaus(String(tieto.n || '').toUpperCase(), koodi));
+      kr.appendChild(kuvaus(String(tieto.n || '').toUpperCase(),
+        koodi + (tieto.l === 'off' ? '  ·  Open Food Facts' : '')));
       kr.appendChild(nappi('Poista', 'vaara', () => {
         delete viivakoodit[koodi];
         tallennaJaettu({ viivakoodit: { [koodi]: deleteField() } });
@@ -3771,10 +3790,73 @@ const KOODIMUODOT = ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf'
 const SKANNAUSVALI = 250;        // ms tunnistusyritysten valilla
 const SAMA_KOODI_VIIVE = 2500;   // ms ennen kuin sama koodi kelpaa uudelleen
 
+// ------------------------------------------------------------------
+//  TUOTENIMEN HAKU VERKOSTA
+//  Viivakoodi on pelkka numerosarja, joten nimi tarvitsee tietokannan.
+//  Open Food Facts on yhteison yllapitama avoin tietokanta: ilmainen,
+//  ei API-avainta, sallii selainpyynnot. Palvelutyontekija ei koske
+//  vieraaseen verkkotunnukseen, joten pyynto menee suoraan lapi.
+//
+//  Haku on vain ehdotus: nimi tarjotaan kenttaan tarkistettavaksi eika
+//  lisata suoraan listalle. Hyvaksytty nimi tallentuu omaan kirjastoon,
+//  jolloin sama koodi tunnistuu jatkossa heti ja ilman verkkoa.
+// ------------------------------------------------------------------
+const OFF_PERUS = 'https://world.openfoodfacts.org/api/v2/product/';
+const OFF_KENTAT = 'product_name,product_name_fi,generic_name,generic_name_fi,brands,quantity';
+const OFF_AIKAKATKAISU = 4000;   // kentalla haku ei saa jumittaa skanneria
+const OFF_NIMEN_MAKSIMI = 60;
+
+let offPyynto = null;             // kesken oleva AbortController
+const offEiLoytynyt = new Set();  // taman istunnon turhat haut
+
+// Nimet ovat tietokannassa epatasaisia: joskus pelkka "Maito", joskus
+// koko pakkausteksti. Merkki eteen vain jos se ei jo ole nimessa.
+function kokoaTuotenimi(t){
+  const nimi = String(t.product_name_fi || t.product_name ||
+                      t.generic_name_fi || t.generic_name || '').trim();
+  if (!nimi) return '';
+  const merkki = String(t.brands || '').split(',')[0].trim();
+  const kokonaan = (merkki && !nimi.toLowerCase().includes(merkki.toLowerCase()))
+    ? merkki + ' ' + nimi : nimi;
+  return kokonaan.replace(/\s+/g, ' ').trim().slice(0, OFF_NIMEN_MAKSIMI).trim().toUpperCase();
+}
+
+async function haeTuotetieto(koodi){
+  if (!ulkoasu.verkkohaku || !navigator.onLine) return '';
+  if (offEiLoytynyt.has(koodi)) return '';
+  // Vain numeeriset EAN- ja UPC-koodit ovat tuotekoodeja. Esimerkiksi
+  // pakettien seurantakoodit ovat code_128:aa eika niita kannata hakea.
+  if (!/^\d{6,14}$/.test(koodi)) return '';
+
+  const ohjain = new AbortController();
+  offPyynto = ohjain;
+  const katkaisu = setTimeout(() => ohjain.abort(), OFF_AIKAKATKAISU);
+  try {
+    const vastaus = await fetch(
+      OFF_PERUS + encodeURIComponent(koodi) + '.json?fields=' + OFF_KENTAT,
+      { signal: ohjain.signal, headers: { Accept: 'application/json' } });
+    if (vastaus.status === 404){ offEiLoytynyt.add(koodi); return ''; }
+    if (!vastaus.ok) return '';
+    const data = await vastaus.json();
+    if (!data || data.status === 0 || !data.product){ offEiLoytynyt.add(koodi); return ''; }
+    const nimi = kokoaTuotenimi(data.product);
+    if (!nimi) offEiLoytynyt.add(koodi);
+    return nimi;
+  } catch(e){
+    // Aikakatkaisu, katkennut yhteys tai odottamaton vastaus: ei merkita
+    // loytymattomaksi, jotta uusi yritys on mahdollinen.
+    return '';
+  } finally {
+    clearTimeout(katkaisu);
+    if (offPyynto === ohjain) offPyynto = null;
+  }
+}
+
 let skanneriVirta = null;        // MediaStream
 let skanneriAjastin = null;
 let skanneriTunnistin = null;
 let odottavaKoodi = null;        // koodi joka odottaa nimea
+let viimeEhdotus = '';           // verkosta saatu nimi, jotta lahde tiedetaan
 let viimeksiLuettu = { koodi: null, aika: 0 };
 
 const skanneriAuki = () => {
@@ -3863,7 +3945,7 @@ function lueSilmukka(){
   }, SKANNAUSVALI);
 }
 
-function kasitteleKoodi(koodi){
+async function kasitteleKoodi(koodi){
   const nyt = Date.now();
   if (koodi === viimeksiLuettu.koodi && nyt - viimeksiLuettu.aika < SAMA_KOODI_VIIVE){
     return lueSilmukka();
@@ -3871,6 +3953,8 @@ function kasitteleKoodi(koodi){
   viimeksiLuettu = { koodi, aika: nyt };
   varise(25);
 
+  // 1) Oma kirjasto ensin. Se on nopea, toimii ilman verkkoa ja sisältää
+  //    juuri ne nimet jotka olet itse hyväksynyt.
   const tieto = viivakoodit[koodi];
   if (tieto && tieto.n){
     addNamed(tieto.n, '1');
@@ -3878,14 +3962,35 @@ function kasitteleKoodi(koodi){
     return lueSilmukka();
   }
 
-  // Tuntematon koodi: kysytaan nimi kerran, sen jalkeen se muistetaan.
+  // odottavaKoodi pysäyttää lukusilmukan haun ajaksi
   odottavaKoodi = koodi;
+  viimeEhdotus = '';
+
+  // 2) Tuntematon koodi tarkistetaan verkosta, jos haku on päällä.
+  if (ulkoasu.verkkohaku && navigator.onLine && /^\d{6,14}$/.test(koodi)){
+    skanneriViesti('Haetaan tuotetietoja… <span class="koodiRivi">' + htmlTurva(koodi) + '</span>');
+    const ehdotus = await haeTuotetieto(koodi);
+    // Skanneri on voitu sulkea tai uusi koodi lukea haun aikana
+    if (!skanneriAuki() || odottavaKoodi !== koodi) return;
+    viimeEhdotus = ehdotus;
+    return kysyNimi(koodi, ehdotus);
+  }
+
+  kysyNimi(koodi, '');
+}
+
+// 3) Nimi kysytään aina: haku tuottaa ehdotuksen, ei valmista lisäystä.
+function kysyNimi(koodi, ehdotus){
   document.getElementById('skanneriNimiRivi').style.display = 'flex';
-  skanneriViesti('Tuntematon koodi <span class="koodiRivi">' + htmlTurva(koodi) +
-                 '</span><br>Anna tuotteen nimi, niin se muistetaan jatkossa.');
+  skanneriViesti(ehdotus
+    ? 'Open Food Facts: <b>' + htmlTurva(ehdotus) + '</b><br>Tarkista nimi ja tallenna.'
+    : 'Tuntematon koodi <span class="koodiRivi">' + htmlTurva(koodi) +
+      '</span><br>Anna tuotteen nimi, niin se muistetaan jatkossa.');
   const kentta = document.getElementById('skanneriNimi');
-  kentta.value = '';
+  kentta.value = ehdotus;
   kentta.focus();
+  // Ehdotus valmiiksi maalattuna: kirjoittaminen korvaa sen suoraan
+  if (ehdotus) kentta.select();
 }
 
 window.tallennaSkannattu = () => {
@@ -3893,12 +3998,14 @@ window.tallennaSkannattu = () => {
   const nimi = (kentta.value || '').trim().toUpperCase();
   if (!nimi || !odottavaKoodi) return;
 
-  viivakoodit[odottavaKoodi] = { n: nimi, t: Date.now() };
+  viivakoodit[odottavaKoodi] = { n: nimi, t: Date.now(),
+                                 l: (nimi === viimeEhdotus && nimi) ? 'off' : 'oma' };
   tallennaJaettu({ viivakoodit: { [odottavaKoodi]: viivakoodit[odottavaKoodi] } });
   addNamed(nimi, '1');
   skanneriViesti('Lisätty listalle: <b>' + htmlTurva(nimi) + '</b>');
 
   odottavaKoodi = null;
+  viimeEhdotus = '';
   kentta.value = '';
   document.getElementById('skanneriNimiRivi').style.display = 'none';
   lueSilmukka();
@@ -3910,7 +4017,9 @@ window.suljeSkanneri = (takaaPain) => {
   const pohja = document.getElementById('skanneri');
   if (!pohja || !pohja.classList.contains('auki')) return;
   clearTimeout(skanneriAjastin); skanneriAjastin = null;
+  if (offPyynto){ try { offPyynto.abort(); } catch(e){} offPyynto = null; }
   odottavaKoodi = null;
+  viimeEhdotus = '';
   if (skanneriVirta){
     try { skanneriVirta.getTracks().forEach(t => t.stop()); } catch(e){}
     skanneriVirta = null;
@@ -3955,6 +4064,12 @@ function wireInputs(){
   });
   listEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter'){ e.preventDefault(); window.addList(); }
+  });
+  // Skannerin nimikentässä näppäimistön rivinvaihto tallentaa, jotta
+  // koodin lukemisesta listalle pääsee ilman että kenttää etsii sormella.
+  document.getElementById('skanneriNimi').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter'){ e.preventDefault(); window.tallennaSkannattu(); }
+    if (e.key === 'Escape'){ e.preventDefault(); window.suljeSkanneri(); }
   });
 }
 
