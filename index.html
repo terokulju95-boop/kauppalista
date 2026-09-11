@@ -628,6 +628,135 @@ body[data-view="asetukset"] #asetukset{display:block;}
   color:#000;border-color:transparent;font-weight:800;}
 .valintaNappi.valittu:hover{color:#000;background:linear-gradient(135deg,#ff9830,#ff7a00);}
 
+/* ============ AIDOSTI MUSTA TEEMA ============ */
+/* OLED-näytöllä musta pikseli on sammutettu pikseli. Siksi tässä teemassa
+   ei ole läpikuultavia pintoja eikä liikkuvaa taustahehkua – ne pakottaisivat
+   pikselit palamaan koko ruudun alalta. Kaikki pinnat ovat läpinäkymättömiä,
+   jolloin selaimen ei tarvitse myöskään laskea sumennusta. */
+body[data-teema="musta"]{background:#000;}
+body[data-teema="musta"]::before{display:none;}
+body[data-teema="musta"]::after{opacity:0.22;}
+body[data-teema="musta"] .glass-card,
+body[data-teema="musta"] .asetusKortti{
+  background:#0b0b0e;backdrop-filter:none;-webkit-backdrop-filter:none;
+  border-color:rgba(255,255,255,0.13);box-shadow:none;
+}
+body[data-teema="musta"] .glass-card:hover{transform:none;box-shadow:none;
+  border-color:rgba(255,152,48,0.3);}
+body[data-teema="musta"] .user-switcher{background:#0b0b0e;}
+body[data-teema="musta"] .listRow{background:#0b0b0e;backdrop-filter:none;-webkit-backdrop-filter:none;}
+body[data-teema="musta"] .listRow:hover{background:#16161b;}
+body[data-teema="musta"] .listRow.active{background:rgba(255,152,48,0.09);box-shadow:none;}
+body[data-teema="musta"] .item{background:#0a0a0d;backdrop-filter:none;-webkit-backdrop-filter:none;
+  border-color:rgba(255,255,255,0.09);}
+body[data-teema="musta"] .item:hover{background:#16161b;}
+body[data-teema="musta"] .item.doneState{background:#050d06;}
+body[data-teema="musta"] .item.editing,
+body[data-teema="musta"] .item.editing:hover{background:#14100a;}
+body[data-teema="musta"] .item.painetaan{background:#1d1d24;}
+body[data-teema="musta"] input,
+body[data-teema="musta"] .maaraSaadin,
+body[data-teema="musta"] .item.editing select,
+body[data-teema="musta"] #asetusSisalto select{background:#0d0d10;}
+body[data-teema="musta"] input:focus{background:#141418;}
+body[data-teema="musta"] #topbar.kiinni{background:rgba(0,0,0,0.94);box-shadow:0 8px 24px rgba(0,0,0,0.9);}
+body[data-teema="musta"] .divider::after{background:#000;}
+body[data-teema="musta"] #updateBar{background:rgba(0,0,0,0.97);}
+body[data-teema="musta"] .list-title-section{background:rgba(255,152,48,0.06);}
+body[data-teema="musta"] .skanneriPohja{background:#000;}
+
+/* ============ ASETUSTEN VÄLILEHDET ============ */
+/* Asetukset kasvoivat yhdeksi pitkäksi vieritettäväksi sivuksi. Välilehdet
+   näyttävät kerrallaan vain yhden aihepiirin. Palkki vierii vaakasuunnassa,
+   jottei se rivity kahdelle riville kapealla ruudulla. */
+.asetusValilehdet{
+  display:flex;gap:8px;margin-bottom:16px;padding-bottom:4px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.asetusValilehdet::-webkit-scrollbar{display:none;}
+.valilehti{
+  flex:0 0 auto;padding:12px 16px;font-size:13px;font-weight:700;letter-spacing:0.5px;
+  border-radius:14px;box-shadow:none;text-transform:none;white-space:nowrap;
+  background:rgba(255,255,255,0.06);color:#a8a8c0;border:1px solid rgba(255,255,255,0.12);
+}
+.valilehti::before{display:none;}
+.valilehti:hover{background:rgba(255,255,255,0.13);color:#fff;transform:none;box-shadow:none;}
+.valilehti.valittu{background:linear-gradient(135deg,#ff9830,#ff7a00);color:#000;
+  border-color:transparent;font-weight:800;}
+.valilehti.valittu:hover{color:#000;background:linear-gradient(135deg,#ff9830,#ff7a00);}
+.valilehtiMerkki{
+  display:inline-block;margin-left:7px;min-width:20px;padding:1px 6px;border-radius:99px;
+  background:rgba(255,77,77,0.9);color:#fff;font-size:11px;font-weight:800;letter-spacing:0;
+}
+.valilehti.valittu .valilehtiMerkki{background:rgba(0,0,0,0.35);color:#fff;}
+
+/* ============ VIIVAKOODIN LUKU ============ */
+.skanneriPohja{
+  position:fixed;inset:0;z-index:11000;display:none;
+  background:#08080c;flex-direction:column;
+}
+.skanneriPohja.auki{display:flex;}
+.skanneriKuva{
+  flex:1;min-height:0;position:relative;overflow:hidden;background:#000;
+}
+.skanneriKuva video{width:100%;height:100%;object-fit:cover;display:block;}
+/* Tähtäin kertoo mihin koodi asetetaan. Reunojen tummennus tehdään
+   yhdellä isolla varjolla, jotta keskelle jää kirkas alue. */
+.skanneriTahtain{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:78%;max-width:420px;aspect-ratio:1.6;border-radius:18px;
+  border:2px solid rgba(255,152,48,0.9);
+  box-shadow:0 0 0 9999px rgba(0,0,0,0.55);
+  pointer-events:none;
+}
+.skanneriTahtain::after{
+  content:'';position:absolute;left:8%;right:8%;top:50%;height:2px;
+  background:linear-gradient(90deg,transparent,#ff9830,transparent);
+  animation:skanViiva 2s ease-in-out infinite;
+}
+@keyframes skanViiva{0%,100%{transform:translateY(-38px);}50%{transform:translateY(38px);}}
+.skanneriOhje{
+  position:absolute;left:16px;right:16px;bottom:18px;text-align:center;
+  font-size:14px;font-weight:600;color:#fff;line-height:1.5;
+  text-shadow:0 2px 10px rgba(0,0,0,0.9);
+}
+.skanneriPalkki{
+  flex:0 0 auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+  background:#0b0b0e;border-top:1px solid rgba(255,255,255,0.12);
+  display:flex;flex-direction:column;gap:10px;
+}
+.skanneriPalkki .rivi{display:flex;gap:10px;align-items:stretch;}
+.skanneriPalkki input{text-transform:none;}
+.skanneriOsuma{
+  font-size:13px;color:#9a9ab0;line-height:1.5;min-height:19px;
+}
+.skanneriOsuma b{color:#ff9830;}
+.skanneriVirhe{color:#ff8a8a;}
+.skanNappi{
+  flex:0 0 62px;width:62px;padding:0;font-size:24px;line-height:1;
+  background:rgba(255,152,48,0.14);color:#ff9830;
+  border:1px solid rgba(255,152,48,0.42);box-shadow:none;
+  display:flex;align-items:center;justify-content:center;
+}
+.skanNappi:hover{background:rgba(255,152,48,0.24);transform:none;box-shadow:none;}
+.skanNappi:active{transform:scale(0.94);}
+.koodiRivi{font-family:ui-monospace,'Cascadia Mono',Consolas,monospace;
+  font-size:12px;color:#7a7a92;letter-spacing:0.5px;}
+
+/* ============ UUSI OSASTO MUOKKAUSNÄKYMÄSSÄ ============ */
+.uusiKatLaatikko{
+  flex:1 1 100%;min-width:0;display:flex;flex-direction:column;gap:9px;
+  background:rgba(255,152,48,0.07);border:1px solid rgba(255,152,48,0.3);
+  border-radius:13px;padding:11px;
+}
+.uusiKatOtsikko{font-size:12px;font-weight:800;letter-spacing:1px;
+  text-transform:uppercase;color:#ff9830;}
+.uusiKatRivi{display:flex;gap:8px;}
+.uusiKatRivi .emojiKentta{flex:0 0 62px;text-align:center;text-transform:none;}
+.uusiKatRivi input:not(.emojiKentta){flex:1;min-width:0;text-transform:none;}
+.uusiKatNapit{display:flex;gap:8px;}
+.uusiKatNapit button{flex:1;padding:11px 8px;font-size:13px;}
+
 /* ---------- Liikkeen vähennys ---------- */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
@@ -704,7 +833,11 @@ body[data-view="asetukset"] #asetukset{display:block;}
     <button class='isoNappi' id='lisaaAuki' type='button' onclick='avaaLisays()'>+ Lisää tuote</button>
     <div class='glass-card'>
       <!-- Tuotteen nimi saa koko leveyden: määräsäädin vei siitä liikaa -->
-      <input id='itemName' placeholder='Tuote...' autocomplete='off' style='margin-bottom:12px;'>
+      <div class='row' style='margin-bottom:12px;'>
+        <input id='itemName' placeholder='Tuote...' autocomplete='off' style='flex:1;min-width:0;'>
+        <button class='skanNappi' id='skanNappi' type='button' style='display:none;'
+                onclick='avaaSkanneri()' aria-label='Lue viivakoodi'>📷</button>
+      </div>
       <div class='row lisaysRivi'>
         <div class='maaraSaadin'>
           <button type='button' class='maaraNappi' onclick='saadaMaara(-1)' aria-label='Vähennä'>&minus;</button>
@@ -721,6 +854,24 @@ body[data-view="asetukset"] #asetukset{display:block;}
     <div id='items'></div>
     <button class='clearBtn' onclick='clearAll()'>🗑️ Tyhjennä lista</button>
   </section>
+</div>
+
+<!-- Viivakoodin luku. Näkyy vain kun asetus on päällä ja käyttäjä painaa
+     kameranappia. Kamera sammutetaan aina kun tämä suljetaan. -->
+<div class='skanneriPohja' id='skanneri' role='dialog' aria-label='Viivakoodin luku'>
+  <div class='skanneriKuva'>
+    <video id='skanneriVideo' playsinline muted></video>
+    <div class='skanneriTahtain' id='skanneriTahtain'></div>
+    <div class='skanneriOhje' id='skanneriOhje'>Kohdista viivakoodi ruudun keskelle</div>
+  </div>
+  <div class='skanneriPalkki'>
+    <div class='skanneriOsuma' id='skanneriOsuma'></div>
+    <div class='rivi' id='skanneriNimiRivi' style='display:none;'>
+      <input id='skanneriNimi' placeholder='Tuotteen nimi' autocomplete='off'>
+      <button class='btn-add' type='button' onclick='tallennaSkannattu()'>Tallenna</button>
+    </div>
+    <button class='isoNappi' type='button' onclick='suljeSkanneri()'>Sulje</button>
+  </div>
 </div>
 
 <script type="module">
@@ -1273,6 +1424,7 @@ let synkkaVirheita = 0;
 let opitut = {};
 let omatSanat = {};        // asetuksissa lisätyt hakusanat: sana -> kategoria
 let tuntemattomat = {};    // Muut-osastoon päätyneet nimet
+let viivakoodit = {};      // luetut viivakoodit: koodi -> { n: nimi, t: aika }
 // ------------------------------------------------------------------
 //  PITKAN PAINALLUKSEN KESTO
 //  Osa jaettua ulkoasu-oliota, joten arvo tallentuu samaan Firestore-
@@ -1302,8 +1454,34 @@ const YLIVIIVAUS_VAIHTOEHDOT = [
 const YLIVIIVAUS_OLETUS = 200;
 const kelpaakoYliviivaus = (v) => YLIVIIVAUS_VAIHTOEHDOT.some(o => o.arvo === v);
 
-let ulkoasu = { variotsikot: true, piilotaYksi: true,
+// ------------------------------------------------------------------
+//  TEEMA
+//  Jaettu asetus: asetuksiin paasee vain PIN-koodilla, joten teeman
+//  valitsee sama henkilo kaikille kayttajille ja laitteille.
+//  'musta' on tarkoitettu OLED-naytolle: ei taustahehkua, ei lapikuultavia
+//  pintoja, taysin musta tausta.
+// ------------------------------------------------------------------
+const TEEMAT = [
+  { arvo: 'oletus', teksti: 'Oletus' },
+  { arvo: 'musta',  teksti: 'Musta' }
+];
+const TEEMA_OLETUS = 'oletus';
+const kelpaakoTeema = (v) => TEEMAT.some(t => t.arvo === v);
+
+let ulkoasu = { variotsikot: true, piilotaYksi: true, teema: TEEMA_OLETUS, viivakoodi: false,
                 painallusMs: PAINALLUS_OLETUS, yliviivausMs: YLIVIIVAUS_OLETUS };
+
+// Teema ja skannerinappi luetaan suoraan ulkoasu-oliosta, joten yksi
+// funktio riittaa kaikkiin paivityksiin.
+function kaytaUlkoasu(){
+  const t = kelpaakoTeema(ulkoasu.teema) ? ulkoasu.teema : TEEMA_OLETUS;
+  document.body.dataset.teema = t;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', t === 'musta' ? '#000000' : '#ff9830');
+  const nappi = document.getElementById('skanNappi');
+  if (nappi) nappi.style.display = ulkoasu.viivakoodi ? 'flex' : 'none';
+  if (!ulkoasu.viivakoodi) suljeSkanneri();
+}
 
 // Luetaan vasta painalluksen alkaessa, jotta muutos otetaan kayttoon heti
 // ilman etta kuuntelijoita tarvitsee kiinnittaa uudelleen.
@@ -1324,7 +1502,7 @@ function tallennaJaettu(osa){
 }
 function kokoaJaettu(){
   return { sanat: opitut, kayttajat: KAYTTAJAT, kategoriat: kategoriaAsetukset,
-           sanakirja: omatSanat, tuntemattomat, ulkoasu };
+           sanakirja: omatSanat, tuntemattomat, viivakoodit, ulkoasu };
 }
 function otaJaettuKayttoon(d){
   const puhdas = {};
@@ -1346,17 +1524,21 @@ function otaJaettuKayttoon(d){
   }
   omatSanat = (d.sanakirja && typeof d.sanakirja === 'object') ? d.sanakirja : {};
   tuntemattomat = (d.tuntemattomat && typeof d.tuntemattomat === 'object') ? d.tuntemattomat : {};
+  viivakoodit = (d.viivakoodit && typeof d.viivakoodit === 'object') ? d.viivakoodit : {};
   if (d.ulkoasu && typeof d.ulkoasu === 'object'){
     // Vanha versio ei tunne painallusMs-kenttaa, ja kentta voi olla
     // roskaa. Tuntematon arvo palautuu oletukseen sen sijaan etta
     // painallus jaisi jumiin mahdottomaan kestoon.
     ulkoasu = { variotsikot: d.ulkoasu.variotsikot !== false,
                 piilotaYksi: d.ulkoasu.piilotaYksi !== false,
+                teema: kelpaakoTeema(d.ulkoasu.teema) ? d.ulkoasu.teema : TEEMA_OLETUS,
+                viivakoodi: d.ulkoasu.viivakoodi === true,
                 painallusMs: kelpaakoPainallus(d.ulkoasu.painallusMs)
                   ? d.ulkoasu.painallusMs : PAINALLUS_OLETUS,
                 yliviivausMs: kelpaakoYliviivaus(d.ulkoasu.yliviivausMs)
                   ? d.ulkoasu.yliviivausMs : YLIVIIVAUS_OLETUS };
   }
+  kaytaUlkoasu();
   varmistaTilat();
   // Sanaston ja kategorioiden uudelleenrakennus tyhjentää arvausvälimuistin,
   // jolloin jokainen tuote laskettaisiin uudestaan sumealla haulla. Tehdään
@@ -1877,8 +2059,14 @@ function taaksepain(){
 window.taaksepain = taaksepain;
 
 window.addEventListener('popstate', () => {
+  // Skanneri on päällimmäisenä: takaisin sulkee ensin sen, ei koko näkymää
+  if (skanneriAuki()){ suljeSkanneri(true); return; }
+  // Skannerin sulkeminen napista kutsuu history.back(), joka laukaisee tämän
+  // käsittelijän. Ilman lippua se veisi listanäkymästä listoihin.
+  if (ohitaPopstate){ ohitaPopstate = false; return; }
   if (view !== 'listat') vaihdaNakyma('listat', 'taakse');
 });
+let ohitaPopstate = false;
 
 // Määrän säätö napeilla. Toimii myös vapaamuotoisella arvolla ("500 g"),
 // jolloin muutetaan vain alussa olevaa lukua.
@@ -1980,7 +2168,7 @@ const PIN = '3661';
 //  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
 //  pyorii eri versio kuin luulet.
 // ============================================================
-const SOVELLUS_VERSIO = '5.2.0';
+const SOVELLUS_VERSIO = '5.3.0';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
@@ -2153,6 +2341,7 @@ async function keraaDiagnostiikka(){
     opittuja: Object.keys(opitut).length,
     omiaSanoja: Object.keys(omatSanat).length,
     tunnistamattomia: Object.keys(tuntemattomat).length,
+    viivakoodeja: Object.keys(viivakoodit).length,
     nakyma: (matchMedia('(display-mode: standalone)').matches || navigator.standalone)
       ? 'standalone' : 'selain',
     ruutu: innerWidth + '×' + innerHeight + ' @' + (devicePixelRatio || 1) + 'x',
@@ -2247,6 +2436,7 @@ function piirraKehitysOsio(sisalto){
     K('Opittuja', String(t.opittuja));
     K('Omia hakusanoja', String(t.omiaSanoja));
     K('Tunnistamattomia', String(t.tunnistamattomia));
+    K('Viivakoodeja', String(t.viivakoodeja));
 
     // ---- Ympäristö ----
     K('Näkymä', t.nakyma);
@@ -2408,6 +2598,66 @@ function kytkin(paalla, toiminto){
   return b;
 }
 
+// ============================================================
+//  ASETUSTEN VALILEHDET
+//  Asetukset kasvoivat yhdeksi pitkaksi sivuksi, jolta etsittava kohta
+//  loytyi vain vierittamalla. Aihepiirit ovat nyt omilla valilehdillaan.
+//  Valittu valilehti muistetaan laitekohtaisesti: se on nakymaasetus,
+//  ei jaettua dataa, joten localStorage on oikea paikka.
+// ============================================================
+const ASETUS_VALILEHDET = [
+  { id: 'ulkoasu',    teksti: '🎨 Ulkoasu' },
+  { id: 'kayttajat',  teksti: '👥 Käyttäjät' },
+  { id: 'kategoriat', teksti: '🗂️ Kategoriat' },
+  { id: 'sanasto',    teksti: '🧠 Sanasto' },
+  { id: 'yleiset',    teksti: '⚙️ Yleiset' }
+];
+const VALILEHTI_MUISTI = 'kauppalista_asetusvalilehti';
+let asetusValilehti = 'ulkoasu';
+try {
+  const v = localStorage.getItem(VALILEHTI_MUISTI);
+  if (ASETUS_VALILEHDET.some(x => x.id === v)) asetusValilehti = v;
+} catch(e){}
+
+function vaihdaValilehti(id){
+  if (asetusValilehti === id) return;
+  asetusValilehti = id;
+  try { localStorage.setItem(VALILEHTI_MUISTI, id); } catch(e){}
+  varise(8);
+  piirraAsetukset();
+  // Pitkalta valilehdelta lyhyelle siirryttaessa sivu jaisi muuten
+  // vierityksen puolivaliin, jolloin uusi sisalto nayttaisi tyhjalta.
+  const y = document.getElementById('asetukset');
+  if (y) y.scrollIntoView({ block: 'start', behavior: 'auto' });
+}
+
+function piirraValilehdet(){
+  const d = document.createElement('div');
+  d.className = 'asetusValilehdet';
+  d.setAttribute('role', 'tablist');
+  const odottavia = Object.keys(tuntemattomat).length;
+  for (const v of ASETUS_VALILEHDET){
+    const valittu = v.id === asetusValilehti;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'valilehti' + (valittu ? ' valittu' : '');
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', valittu ? 'true' : 'false');
+    b.textContent = v.teksti;
+    // Tunnistamattomat ovat ainoa asetus joka odottaa toimenpidetta,
+    // joten niiden maara nakyy suoraan valilehden paalla.
+    if (v.id === 'sanasto' && odottavia){
+      const m = document.createElement('span');
+      m.className = 'valilehtiMerkki';
+      m.textContent = odottavia > 99 ? '99+' : odottavia;
+      b.appendChild(m);
+    }
+    b.onclick = () => vaihdaValilehti(v.id);
+    d.appendChild(b);
+  }
+  return d;
+}
+
 function piirraAsetukset(){
   const portti = document.getElementById('pinPortti');
   const sisalto = document.getElementById('asetusSisalto');
@@ -2416,9 +2666,36 @@ function piirraAsetukset(){
   sisalto.style.display = pinAvattu ? 'block' : 'none';
   if (!pinAvattu){ sisalto.innerHTML = ''; return; }
   sisalto.innerHTML = '';
+  sisalto.appendChild(piirraValilehdet());
 
-  // ---------- Ulkoasu ----------
+  if (asetusValilehti === 'ulkoasu')    osioUlkoasu(sisalto);
+  if (asetusValilehti === 'kayttajat')  osioKayttajat(sisalto);
+  if (asetusValilehti === 'kategoriat') osioKategoriat(sisalto);
+  if (asetusValilehti === 'sanasto')    osioSanasto(sisalto);
+  if (asetusValilehti === 'yleiset'){
+    osioViivakoodi(sisalto);
+    osioLukitus(sisalto);
+    piirraVersioKortti(sisalto);
+    if (kehitysTila) piirraKehitysOsio(sisalto);
+  }
+}
+
+// ---------- Ulkoasu ----------
+function osioUlkoasu(sisalto){
   const u = osio('🎨 Ulkoasu');
+  const rTeema = rivi(true);
+  rTeema.style.paddingLeft = '0';
+  rTeema.append(kuvaus('Teema',
+    'Musta sammuttaa taustahehkun ja läpikuultavat pinnat. OLED-näytöllä se säästää akkua.'),
+    valintaRyhma(TEEMAT, kelpaakoTeema(ulkoasu.teema) ? ulkoasu.teema : TEEMA_OLETUS, (arvo) => {
+      ulkoasu.teema = arvo;
+      tallennaJaettu({ ulkoasu });
+      kaytaUlkoasu();
+      varise(12);
+      piirraAsetukset();
+    }));
+  u.appendChild(rTeema);
+
   const r1 = rivi();
   r1.append(kuvaus('Väritetyt kategoriaotsikot', 'Jokaisella osastolla oma väri'),
     kytkin(ulkoasu.variotsikot, () => {
@@ -2454,8 +2731,10 @@ function piirraAsetukset(){
 
   u.append(r1, r2, r3, r4);
   sisalto.appendChild(u);
+}
 
-  // ---------- Käyttäjät ----------
+// ---------- Käyttäjät ----------
+function osioKayttajat(sisalto){
   const k = osio('👥 Käyttäjät');
   KAYTTAJAT.forEach((kt) => {
     const r = rivi(true);
@@ -2478,9 +2757,13 @@ function piirraAsetukset(){
   lisaaRivi.firstChild.style.flex = '1';
   k.appendChild(lisaaRivi);
   sisalto.appendChild(k);
+}
 
-  // ---------- Kategoriat ----------
+// ---------- Kategoriat ----------
+function osioKategoriat(sisalto){
   const kat = osio('🗂️ Kategoriat');
+  kat.insertAdjacentHTML('beforeend',
+    `<p class='asetusTeksti'>Uuden osaston voi luoda myös suoraan tuotteen muokkausnäkymässä: valitse osastovalikosta “Uusi osasto”.</p>`);
   const kaikkiKat = [...PERUSKATEGORIAT, ...(kategoriaAsetukset.lisatyt || [])];
   const piilo = new Set(kategoriaAsetukset.piilotetut || []);
   const jarjestetyt = [...CATEGORIES, ...kaikkiKat.filter(c => piilo.has(c.id))];
@@ -2515,7 +2798,10 @@ function piirraAsetukset(){
   katRivi.firstChild.style.flex = '1';
   kat.appendChild(katRivi);
   sisalto.appendChild(kat);
+}
 
+// ---------- Sanasto: tunnistamattomat, oma sanakirja ja opitut ----------
+function osioSanasto(sisalto){
   // ---------- Tuntemattomat tuotteet ----------
   const t = osio('❓ Tunnistamattomat');
   const lista = Object.entries(tuntemattomat)
@@ -2604,8 +2890,63 @@ function piirraAsetukset(){
     });
   }
   sisalto.appendChild(op);
+}
 
-  // ---------- Lukitus ----------
+// ---------- Viivakoodin luku ----------
+function osioViivakoodi(sisalto){
+  const v = osio('📷 Viivakoodin luku');
+  const r = rivi();
+  r.append(kuvaus('Lue tuote viivakoodista',
+    'Lisää kameranapin tuotekentän viereen'),
+    kytkin(ulkoasu.viivakoodi, () => {
+      ulkoasu.viivakoodi = !ulkoasu.viivakoodi;
+      tallennaJaettu({ ulkoasu });
+      kaytaUlkoasu();
+      piirraAsetukset();
+    }));
+  v.appendChild(r);
+
+  if (!ulkoasu.viivakoodi){
+    v.insertAdjacentHTML('beforeend',
+      `<div class='tyhjaOsio'>Kytkin lisää tuotekentän viereen kameranapin. Ilman sitä sovellus toimii täsmälleen kuten ennenkin.</div>`);
+    sisalto.appendChild(v);
+    return;
+  }
+
+  if (!skanneriTuettu()){
+    v.insertAdjacentHTML('beforeend',
+      `<p class='asetusTeksti' style='color:#ff8a8a;'>Tämä selain ei osaa lukea viivakoodeja. Toiminto vaatii Chromen Androidilla.</p>`);
+  } else {
+    v.insertAdjacentHTML('beforeend',
+      `<p class='asetusTeksti'>Tuntemattoman koodin kohdalla sovellus kysyy tuotteen nimen kerran. Sen jälkeen sama koodi tunnistuu myös toisen käyttäjän puhelimessa.</p>`);
+  }
+
+  const koodit = Object.entries(viivakoodit)
+    .sort((a, b) => (b[1].t || 0) - (a[1].t || 0));
+  if (!koodit.length){
+    v.insertAdjacentHTML('beforeend',
+      `<div class='tyhjaOsio'>Ei tallennettuja koodeja.</div>`);
+  } else {
+    koodit.slice(0, 40).forEach(([koodi, tieto]) => {
+      const kr = rivi(true);
+      kr.appendChild(kuvaus(String(tieto.n || '').toUpperCase(), koodi));
+      kr.appendChild(nappi('Poista', 'vaara', () => {
+        delete viivakoodit[koodi];
+        tallennaJaettu({ viivakoodit: { [koodi]: null } });
+        piirraAsetukset();
+      }));
+      v.appendChild(kr);
+    });
+    if (koodit.length > 40){
+      v.insertAdjacentHTML('beforeend',
+        `<div class='tyhjaOsio'>Näytetään 40 uusinta, tallennettuja yhteensä ${koodit.length}.</div>`);
+    }
+  }
+  sisalto.appendChild(v);
+}
+
+// ---------- Lukitus ----------
+function osioLukitus(sisalto){
   const l = osio('🔒 Lukitus');
   const lr = rivi();
   lr.append(kuvaus('Lukitse asetukset', 'PIN kysytään seuraavalla kerralla'),
@@ -2616,10 +2957,6 @@ function piirraAsetukset(){
     }));
   l.appendChild(lr);
   sisalto.appendChild(l);
-
-  // ---------- Versio ja kehittajatila ----------
-  piirraVersioKortti(sisalto);
-  if (kehitysTila) piirraKehitysOsio(sisalto);
 }
 
 // ---------- Asetusten toiminnot ----------
@@ -2663,17 +3000,31 @@ async function poistaKayttaja(id){
   piirraAsetukset(); render();
 }
 
-function lisaaKategoria(){
-  const nimi = (document.getElementById('uusiKatNimi').value || '').trim();
-  const ikoni = (document.getElementById('uusiKatIkoni').value || '🛒').trim() || '🛒';
-  if (!nimi) return;
+// Kategorian luonti on omana funktionaan, koska sen voi kayttaa kahdesta
+// paikasta: asetuksista ja tuotteen muokkausnakymasta. Palauttaa uuden
+// kategorian tai null jos nimi oli tyhja.
+function luoKategoria(rawNimi, rawIkoni){
+  const nimi = String(rawNimi || '').trim();
+  const ikoni = (String(rawIkoni || '').trim() || '🛒');
+  if (!nimi) return null;
   const kaikki = [...PERUSKATEGORIAT, ...(kategoriaAsetukset.lisatyt || [])];
+  // Samanniminen osasto olisi listalla mahdoton erottaa toisesta
+  if (kaikki.some(c => c.name.toLowerCase() === nimi.toLowerCase())) return null;
   const uusi = { id: 'c' + rid(), name: nimi, icon: ikoni,
                  color: VARIPALETTI[kaikki.length % VARIPALETTI.length] };
   kategoriaAsetukset.lisatyt = [...(kategoriaAsetukset.lisatyt || []), uusi];
+  // Uusi osasto ei saa jaada piilotettujen listalle vanhan id:n takia
+  kategoriaAsetukset.piilotetut = (kategoriaAsetukset.piilotetut || []).filter(x => x !== uusi.id);
   rakennaKategoriat();
   tallennaJaettu({ kategoriat: kategoriaAsetukset });
-  document.getElementById('uusiKatNimi').value = '';
+  return uusi;
+}
+
+function lisaaKategoria(){
+  const nimiEl = document.getElementById('uusiKatNimi');
+  const uusi = luoKategoria(nimiEl.value, document.getElementById('uusiKatIkoni').value);
+  if (!uusi) return;
+  nimiEl.value = '';
   piirraAsetukset(); render();
 }
 
@@ -2951,6 +3302,85 @@ function renderAnimated(){
   piirraYliviivaus(kohde);
 }
 
+// Valikon erikoisarvo. Ei voi osua oikean kategorian id:hen, koska ne ovat
+// joko peruskategorioiden lyhyita tunnuksia tai muotoa c + satunnaismerkit.
+const UUSI_KATEGORIA = '__uusi__';
+
+// Osaston luonti tuotteen muokkausnakymassa. Tila elaa editBuf-oliossa,
+// joten lomake sailyy vaikka lista piirtyisi valissa uudelleen.
+function rakennaUusiKatLomake(){
+  const d = document.createElement('div');
+  d.className = 'uusiKatLaatikko';
+
+  const otsikko = document.createElement('div');
+  otsikko.className = 'uusiKatOtsikko';
+  otsikko.textContent = 'Uusi osasto';
+
+  const rivi = document.createElement('div');
+  rivi.className = 'uusiKatRivi';
+  const ikoni = document.createElement('input');
+  ikoni.className = 'emojiKentta';
+  ikoni.maxLength = 4;
+  ikoni.value = editBuf.uusiKat.ikoni || '🛒';
+  ikoni.setAttribute('aria-label', 'Osaston kuvake');
+  ikoni.oninput = () => { editBuf.uusiKat.ikoni = ikoni.value; };
+  const nimi = document.createElement('input');
+  nimi.dataset.editfield = 'uusiKatNimi';
+  nimi.placeholder = 'Osaston nimi';
+  nimi.value = editBuf.uusiKat.nimi || '';
+  nimi.oninput = () => { editBuf.uusiKat.nimi = nimi.value; };
+  nimi.onkeydown = (e) => {
+    if (e.key === 'Enter'){ e.preventDefault(); tallennaUusiKat(); }
+    if (e.key === 'Escape'){ e.preventDefault(); peruUusiKat(); }
+  };
+  rivi.append(ikoni, nimi);
+
+  const virhe = document.createElement('div');
+  virhe.className = 'lisatieto';
+  virhe.id = 'uusiKatVirhe';
+  virhe.textContent = editBuf.uusiKat.virhe || '';
+  if (editBuf.uusiKat.virhe) virhe.style.color = '#ff8a8a';
+
+  const napit = document.createElement('div');
+  napit.className = 'uusiKatNapit';
+  const peru = document.createElement('button');
+  peru.type = 'button'; peru.className = 'btnCancel'; peru.textContent = 'Peruuta';
+  peru.onclick = peruUusiKat;
+  const luo = document.createElement('button');
+  luo.type = 'button'; luo.textContent = 'Luo osasto';
+  luo.onclick = tallennaUusiKat;
+  napit.append(peru, luo);
+
+  d.append(otsikko, rivi, virhe, napit);
+  return d;
+}
+
+function peruUusiKat(){
+  if (!editBuf) return;
+  editBuf.uusiKat = null;
+  render();
+}
+
+function tallennaUusiKat(){
+  if (!editBuf || !editBuf.uusiKat) return;
+  const { nimi, ikoni } = editBuf.uusiKat;
+  if (!String(nimi || '').trim()){
+    editBuf.uusiKat.virhe = 'Anna osastolle nimi';
+    render(); return;
+  }
+  const uusi = luoKategoria(nimi, ikoni);
+  if (!uusi){
+    editBuf.uusiKat.virhe = 'Samanniminen osasto on jo olemassa';
+    render(); return;
+  }
+  // Tuote siirtyy heti uuteen osastoon, ja valinta opitaan vasta kun
+  // muokkaus tallennetaan – samoin kuin mikä tahansa muu osastonvaihto.
+  editBuf.cat = uusi.id;
+  editBuf.uusiKat = null;
+  varise(12);
+  render();
+}
+
 function buildEditRow(it){
   const r = document.createElement('div');
   r.className = 'item editing';
@@ -2998,10 +3428,30 @@ function buildEditRow(it){
     if (c.id === editBuf.cat) o.selected = true;
     sel.appendChild(o);
   });
-  sel.onchange = () => { editBuf.cat = sel.value; };
+  // Viimeinen vaihtoehto avaa osaston luonnin ilman etta asetuksiin
+  // tarvitsee poiketa. Valinta ei jaa tahan arvoon: lomake korvaa valikon.
+  const uusiOpt = document.createElement('option');
+  uusiOpt.value = UUSI_KATEGORIA;
+  uusiOpt.textContent = '➕  Uusi osasto…';
+  sel.appendChild(uusiOpt);
+  sel.onchange = () => {
+    if (sel.value === UUSI_KATEGORIA){
+      editBuf.uusiKat = { nimi: '', ikoni: '🛒' };
+      render();
+      const el = document.querySelector('[data-editfield="uusiKatNimi"]');
+      if (el) el.focus();
+      return;
+    }
+    editBuf.cat = sel.value;
+  };
   catBox.appendChild(sel);
 
-  grid.append(qtyBox, catBox);
+  if (editBuf.uusiKat){
+    grid.style.flexWrap = 'wrap';
+    grid.append(qtyBox, rakennaUusiKatLomake());
+  } else {
+    grid.append(qtyBox, catBox);
+  }
 
   const actions = document.createElement('div');
   actions.className = 'editActions';
@@ -3269,6 +3719,182 @@ function render(){
 // ============================
 // SYÖTTÖKENTÄT
 // ============================
+// ============================================================
+//  VIIVAKOODIN LUKU
+//  Kaytetaan selaimen omaa BarcodeDetectoria. Ulkoista kirjastoa ei
+//  ladata: sovelluksen pitaa kaynnistya myos ilman verkkoa, ja skanneri
+//  on vain lisavaruste. Chrome Androidilla tuki on olemassa, Firefoxilla
+//  ei – siksi tuen puute kerrotaan selvasti eika napista tehda rikkinaista.
+//
+//  Koodi -> nimi -parit tallentuvat jaettuun dokumenttiin, joten kerran
+//  opetettu tuote tunnistuu myos toisen kayttajan puhelimessa.
+// ============================================================
+const KOODIMUODOT = ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','codabar'];
+const SKANNAUSVALI = 250;        // ms tunnistusyritysten valilla
+const SAMA_KOODI_VIIVE = 2500;   // ms ennen kuin sama koodi kelpaa uudelleen
+
+let skanneriVirta = null;        // MediaStream
+let skanneriAjastin = null;
+let skanneriTunnistin = null;
+let odottavaKoodi = null;        // koodi joka odottaa nimea
+let viimeksiLuettu = { koodi: null, aika: 0 };
+
+const skanneriAuki = () => {
+  const el = document.getElementById('skanneri');
+  return !!(el && el.classList.contains('auki'));
+};
+const skanneriTuettu = () =>
+  !!(window.BarcodeDetector && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+// Viivakoodin sisalto ja kayttajan kirjoittama nimi menevat innerHTML:aan,
+// joten ne siivotaan ensin.
+const htmlTurva = (t) => String(t)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;');
+
+function skanneriViesti(teksti, virhe){
+  const el = document.getElementById('skanneriOsuma');
+  if (!el) return;
+  el.innerHTML = teksti;
+  el.classList.toggle('skanneriVirhe', !!virhe);
+}
+
+window.avaaSkanneri = async () => {
+  if (!ulkoasu.viivakoodi) return;
+  if (!getActive()){ showStatus('Avaa ensin lista', '#ff9830'); return; }
+
+  const pohja = document.getElementById('skanneri');
+  pohja.classList.add('auki');
+  document.getElementById('skanneriNimiRivi').style.display = 'none';
+  odottavaKoodi = null;
+  viimeksiLuettu = { koodi: null, aika: 0 };
+  try { history.pushState({ v: 'skanneri' }, ''); } catch(e){}
+
+  if (!skanneriTuettu()){
+    document.getElementById('skanneriTahtain').style.display = 'none';
+    skanneriViesti('Tämä selain ei osaa lukea viivakoodeja. ' +
+                   'Chrome Androidilla toiminto toimii.', true);
+    return;
+  }
+  document.getElementById('skanneriTahtain').style.display = '';
+  skanneriViesti('Käynnistetään kameraa…');
+
+  try {
+    if (!skanneriTunnistin){
+      // Kaikkia muotoja ei tueta joka laitteessa. Pyydetaan vain ne jotka
+      // tama selain tuntee, muuten koko tunnistin kieltaytyy syntymasta.
+      let tuetut = KOODIMUODOT;
+      try {
+        const lista = await window.BarcodeDetector.getSupportedFormats();
+        const suodatettu = KOODIMUODOT.filter(f => lista.includes(f));
+        if (suodatettu.length) tuetut = suodatettu;
+      } catch(e){}
+      skanneriTunnistin = new window.BarcodeDetector({ formats: tuetut });
+    }
+    skanneriVirta = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } }, audio: false
+    });
+    const video = document.getElementById('skanneriVideo');
+    video.srcObject = skanneriVirta;
+    await video.play();
+    skanneriViesti('Kohdista viivakoodi ruudun keskelle');
+    lueSilmukka();
+  } catch(err){
+    console.warn('Kameraa ei saatu käyttöön', err);
+    skanneriViesti(err && err.name === 'NotAllowedError'
+      ? 'Kameran käyttöoikeus puuttuu. Salli kamera selaimen asetuksista.'
+      : 'Kameraa ei saatu käyttöön.', true);
+  }
+};
+
+function lueSilmukka(){
+  clearTimeout(skanneriAjastin);
+  skanneriAjastin = setTimeout(async () => {
+    if (!skanneriAuki() || !skanneriTunnistin || odottavaKoodi) return;
+    const video = document.getElementById('skanneriVideo');
+    try {
+      if (video.readyState >= 2){
+        const osumat = await skanneriTunnistin.detect(video);
+        if (osumat && osumat.length){
+          const koodi = String(osumat[0].rawValue || '').trim();
+          if (koodi) return kasitteleKoodi(koodi);
+        }
+      }
+    } catch(e){ /* yksittainen epaonnistunut ruutu ei kaada silmukkaa */ }
+    lueSilmukka();
+  }, SKANNAUSVALI);
+}
+
+function kasitteleKoodi(koodi){
+  const nyt = Date.now();
+  if (koodi === viimeksiLuettu.koodi && nyt - viimeksiLuettu.aika < SAMA_KOODI_VIIVE){
+    return lueSilmukka();
+  }
+  viimeksiLuettu = { koodi, aika: nyt };
+  varise(25);
+
+  const tieto = viivakoodit[koodi];
+  if (tieto && tieto.n){
+    addNamed(tieto.n, '1');
+    skanneriViesti('Lisätty listalle: <b>' + htmlTurva(tieto.n) + '</b>');
+    return lueSilmukka();
+  }
+
+  // Tuntematon koodi: kysytaan nimi kerran, sen jalkeen se muistetaan.
+  odottavaKoodi = koodi;
+  document.getElementById('skanneriNimiRivi').style.display = 'flex';
+  skanneriViesti('Tuntematon koodi <span class="koodiRivi">' + htmlTurva(koodi) +
+                 '</span><br>Anna tuotteen nimi, niin se muistetaan jatkossa.');
+  const kentta = document.getElementById('skanneriNimi');
+  kentta.value = '';
+  kentta.focus();
+}
+
+window.tallennaSkannattu = () => {
+  const kentta = document.getElementById('skanneriNimi');
+  const nimi = (kentta.value || '').trim().toUpperCase();
+  if (!nimi || !odottavaKoodi) return;
+
+  viivakoodit[odottavaKoodi] = { n: nimi, t: Date.now() };
+  tallennaJaettu({ viivakoodit: { [odottavaKoodi]: viivakoodit[odottavaKoodi] } });
+  addNamed(nimi, '1');
+  skanneriViesti('Lisätty listalle: <b>' + htmlTurva(nimi) + '</b>');
+
+  odottavaKoodi = null;
+  kentta.value = '';
+  document.getElementById('skanneriNimiRivi').style.display = 'none';
+  lueSilmukka();
+};
+
+// takaaPain = true kun sulkeminen tulee selaimen takaisin-napista,
+// jolloin historiasta ei saa poistaa uutta merkintaa.
+window.suljeSkanneri = (takaaPain) => {
+  const pohja = document.getElementById('skanneri');
+  if (!pohja || !pohja.classList.contains('auki')) return;
+  clearTimeout(skanneriAjastin); skanneriAjastin = null;
+  odottavaKoodi = null;
+  if (skanneriVirta){
+    try { skanneriVirta.getTracks().forEach(t => t.stop()); } catch(e){}
+    skanneriVirta = null;
+  }
+  const video = document.getElementById('skanneriVideo');
+  if (video) video.srcObject = null;
+  pohja.classList.remove('auki');
+  document.getElementById('skanneriNimiRivi').style.display = 'none';
+  skanneriViesti('');
+  if (!takaaPain){
+    try {
+      if (history.state && history.state.v === 'skanneri'){
+        ohitaPopstate = true;
+        // Varmistus: jos popstate ei jostain syystä laukea, lippu ei saa
+        // jäädä päälle nielemään seuraavaa takaisin-painallusta.
+        setTimeout(() => { ohitaPopstate = false; }, 800);
+        history.back();
+      }
+    } catch(e){}
+  }
+};
+
 function wireInputs(){
   liitaPainallusKerran();
   const nameEl = document.getElementById('itemName');
