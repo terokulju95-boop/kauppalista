@@ -878,7 +878,7 @@ body[data-teema="musta"] .skanneriPohja{background:#000;}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  doc, collection, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch
+  doc, collection, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1504,12 +1504,39 @@ function kokoaJaettu(){
   return { sanat: opitut, kayttajat: KAYTTAJAT, kategoriat: kategoriaAsetukset,
            sanakirja: omatSanat, tuntemattomat, viivakoodit, ulkoasu };
 }
-function otaJaettuKayttoon(d){
-  const puhdas = {};
-  for (const [k, v] of Object.entries(d.sanat || {})){
-    if (v && typeof v === 'object' && v.c) puhdas[k] = v;
+// Aiemmat versiot poistivat kentan kirjoittamalla siihen nullin. Firestoren
+// merge-kirjoitus ei kuitenkaan poista kenttaa nullilla vaan tallentaa nullin,
+// joten dokumenttiin jai tyhjia avaimia. Ne kaatoivat asetusten listaukset.
+// Poisto kayttaa nyt deleteField():ia, ja vanhat nullit suodatetaan lukiessa
+// ja siivotaan dokumentista kerran istunnossa.
+function erottele(kartta, kelpaako){
+  const ulos = {}, roskat = [];
+  for (const [k, v] of Object.entries(kartta || {})){
+    if (kelpaako(v)) ulos[k] = v; else roskat.push(k);
   }
-  opitut = puhdas;
+  return { ulos, roskat };
+}
+
+let roskatSiivottu = false;
+function siivoaTyhjatKentat(roskat){
+  if (roskatSiivottu) return;
+  const paivitys = {};
+  for (const [kentta, avaimet] of Object.entries(roskat)){
+    if (!avaimet.length) continue;
+    paivitys[kentta] = {};
+    for (const a of avaimet) paivitys[kentta][a] = deleteField();
+  }
+  if (!Object.keys(paivitys).length) return;
+  roskatSiivottu = true;
+  setDoc(opitutRef(), paivitys, { merge: true })
+    .catch(err => console.warn('Tyhjien kenttien siivous ei onnistunut', err));
+}
+
+// pilvesta = true vain Firestoren kuuntelijasta. Paikallisesta peilista
+// luettaessa ei siivota, jottei lippu pala ennen kuin oikea data saapuu.
+function otaJaettuKayttoon(d, pilvesta){
+  const opitutOsa = erottele(d.sanat, v => v && typeof v === 'object' && v.c);
+  opitut = opitutOsa.ulos;
   if (Array.isArray(d.kayttajat) && d.kayttajat.length){
     KAYTTAJAT = d.kayttajat
       .filter(k => k && k.id)
@@ -1522,9 +1549,16 @@ function otaJaettuKayttoon(d){
       jarjestys: Array.isArray(d.kategoriat.jarjestys) ? d.kategoriat.jarjestys : []
     };
   }
-  omatSanat = (d.sanakirja && typeof d.sanakirja === 'object') ? d.sanakirja : {};
-  tuntemattomat = (d.tuntemattomat && typeof d.tuntemattomat === 'object') ? d.tuntemattomat : {};
-  viivakoodit = (d.viivakoodit && typeof d.viivakoodit === 'object') ? d.viivakoodit : {};
+  const sanaOsa = erottele(d.sanakirja, v => typeof v === 'string' && !!v);
+  omatSanat = sanaOsa.ulos;
+  const tuntOsa = erottele(d.tuntemattomat, v => v && typeof v === 'object');
+  tuntemattomat = tuntOsa.ulos;
+  const koodiOsa = erottele(d.viivakoodit, v => v && typeof v === 'object' && v.n);
+  viivakoodit = koodiOsa.ulos;
+  if (pilvesta) siivoaTyhjatKentat({
+    sanat: opitutOsa.roskat, sanakirja: sanaOsa.roskat,
+    tuntemattomat: tuntOsa.roskat, viivakoodit: koodiOsa.roskat
+  });
   if (d.ulkoasu && typeof d.ulkoasu === 'object'){
     // Vanha versio ei tunne painallusMs-kenttaa, ja kentta voi olla
     // roskaa. Tuntematon arvo palautuu oletukseen sen sijaan etta
@@ -1566,7 +1600,8 @@ function learnCategory(nimi, cat){
   opitut[avain] = { n: normName(nimi), c: cat, t: Date.now(), by: currentUser };
   arvausMuisti.delete(avain);
   if (tuntemattomat[avain]){ delete tuntemattomat[avain];
-    tallennaJaettu({ sanat: { [avain]: opitut[avain] }, tuntemattomat: { [avain]: null } }); }
+    tallennaJaettu({ sanat: { [avain]: opitut[avain] },
+                     tuntemattomat: { [avain]: deleteField() } }); }
   else tallennaJaettu({ sanat: { [avain]: opitut[avain] } });
 }
 
@@ -1575,14 +1610,14 @@ function unlearnCategory(nimi){
   if (!opitut[avain]) return;
   delete opitut[avain];
   arvausMuisti.delete(avain);
-  tallennaJaettu({ sanat: { [avain]: null } });
+  tallennaJaettu({ sanat: { [avain]: deleteField() } });
   render();
 }
 window.unlearnCategory = unlearnCategory;
 
 function subscribeOpitut(){
   onSnapshot(opitutRef(), (snap) => {
-    otaJaettuKayttoon(snap.exists() ? (snap.data() || {}) : {});
+    otaJaettuKayttoon(snap.exists() ? (snap.data() || {}) : {}, true);
     USERS().forEach(subscribeUser);
     // Tuntemattomien keruu kirjoittaa samaan dokumenttiin joka kerta kun
     // lisätään outo tuote. Se ei näy listalla, joten ei piirretä turhaan.
@@ -2168,7 +2203,7 @@ const PIN = '3661';
 //  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
 //  pyorii eri versio kuin luulet.
 // ============================================================
-const SOVELLUS_VERSIO = '5.3.0';
+const SOVELLUS_VERSIO = '5.3.1';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
@@ -2805,6 +2840,7 @@ function osioSanasto(sisalto){
   // ---------- Tuntemattomat tuotteet ----------
   const t = osio('❓ Tunnistamattomat');
   const lista = Object.entries(tuntemattomat)
+    .filter(([, v]) => v && typeof v === 'object')
     .sort((a, b) => (b[1].kerrat || 0) - (a[1].kerrat || 0) || (b[1].t || 0) - (a[1].t || 0));
   if (!lista.length){
     t.insertAdjacentHTML('beforeend',
@@ -2829,7 +2865,7 @@ function osioSanasto(sisalto){
       r.appendChild(sel);
       const poistoNappi = nappi('✕', 'vaara', () => {
         delete tuntemattomat[avain];
-        tallennaJaettu({ tuntemattomat: { [avain]: null } });
+        tallennaJaettu({ tuntemattomat: { [avain]: deleteField() } });
         piirraAsetukset();
       });
       poistoNappi.style.flex = '0 0 54px';
@@ -2859,7 +2895,7 @@ function osioSanasto(sisalto){
   skRivi.firstChild.style.flex = '1';
   sk.appendChild(skRivi);
 
-  const omat = Object.entries(omatSanat);
+  const omat = Object.entries(omatSanat).filter(([, cat]) => !!cat);
   if (omat.length){
     omat.sort((a, b) => a[0].localeCompare(b[0], 'fi')).forEach(([sana, cat]) => {
       const r = rivi(true);
@@ -2873,7 +2909,7 @@ function osioSanasto(sisalto){
 
   // ---------- Opitut ----------
   const op = osio('🧠 Opitut tuotteet');
-  const opit = Object.entries(opitut);
+  const opit = Object.entries(opitut).filter(([, v]) => v && typeof v === 'object');
   if (!opit.length){
     op.insertAdjacentHTML('beforeend',
       `<div class='tyhjaOsio'>Ei opittuja. Kun vaihdat tuotteen osastoa muokkausnäkymässä, valinta muistetaan tässä.</div>`);
@@ -2882,7 +2918,8 @@ function osioSanasto(sisalto){
       const r = rivi(true);
       const c = CAT_BY_ID[v.c] || { icon: '📦', name: 'Muut' };
       r.appendChild(kuvaus((v.n || avain).toUpperCase(),
-        c.icon + ' ' + c.name + (v.by ? '  ·  ' + kayttaja(v.by).nimi : '')));
+        c.icon + ' ' + c.name +
+        (v.by && kayttaja(v.by) ? '  ·  ' + kayttaja(v.by).nimi : '')));
       r.appendChild(nappi('Unohda', 'vaara', () => {
         window.unlearnCategory(v.n || avain); piirraAsetukset();
       }));
@@ -2922,6 +2959,7 @@ function osioViivakoodi(sisalto){
   }
 
   const koodit = Object.entries(viivakoodit)
+    .filter(([, v]) => v && typeof v === 'object' && v.n)
     .sort((a, b) => (b[1].t || 0) - (a[1].t || 0));
   if (!koodit.length){
     v.insertAdjacentHTML('beforeend',
@@ -2932,7 +2970,7 @@ function osioViivakoodi(sisalto){
       kr.appendChild(kuvaus(String(tieto.n || '').toUpperCase(), koodi));
       kr.appendChild(nappi('Poista', 'vaara', () => {
         delete viivakoodit[koodi];
-        tallennaJaettu({ viivakoodit: { [koodi]: null } });
+        tallennaJaettu({ viivakoodit: { [koodi]: deleteField() } });
         piirraAsetukset();
       }));
       v.appendChild(kr);
@@ -3073,7 +3111,7 @@ function lisaaSana(){
 function poistaSana(sana){
   delete omatSanat[sana];
   rakennaSanasto();
-  tallennaJaettu({ sanakirja: { [sana]: null } });
+  tallennaJaettu({ sanakirja: { [sana]: deleteField() } });
   piirraAsetukset(); render();
 }
 
