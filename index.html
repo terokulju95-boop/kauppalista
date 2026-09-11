@@ -726,6 +726,7 @@ body[data-teema="musta"] .skanneriPohja{background:#000;}
   display:flex;flex-direction:column;gap:10px;
 }
 .skanneriPalkki .rivi{display:flex;gap:10px;align-items:stretch;}
+.skanneriPalkki .pikkuNappi{flex:1 1 0;min-width:0;padding:12px 8px;}
 .skanneriPalkki input{text-transform:none;}
 .skanneriOsuma{
   font-size:13px;color:#9a9ab0;line-height:1.5;min-height:19px;
@@ -869,6 +870,14 @@ body[data-teema="musta"] .skanneriPohja{background:#000;}
     <div class='rivi' id='skanneriNimiRivi' style='display:none;'>
       <input id='skanneriNimi' placeholder='Tuotteen nimi' autocomplete='off'>
       <button class='btn-add' type='button' onclick='tallennaSkannattu()'>Tallenna</button>
+    </div>
+    <div class='rivi' id='skanneriToiminnot' style='display:none;'>
+      <button class='pikkuNappi' type='button' id='skanneriIlmanMerkkia'
+              style='display:none;' onclick='poistaMerkkiNimesta()'>Ilman merkkiä</button>
+      <button class='pikkuNappi' type='button' id='skanneriMuokkaa'
+              style='display:none;' onclick='muokkaaViimeisinta()'>Muokkaa nimeä</button>
+      <button class='pikkuNappi' type='button' id='skanneriPeru'
+              style='display:none;' onclick='peruNimiKysely()'>Peruuta</button>
     </div>
     <button class='isoNappi' type='button' onclick='suljeSkanneri()'>Sulje</button>
   </div>
@@ -2205,7 +2214,7 @@ const PIN = '3661';
 //  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
 //  pyorii eri versio kuin luulet.
 // ============================================================
-const SOVELLUS_VERSIO = '5.4.0';
+const SOVELLUS_VERSIO = '5.5.0';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
@@ -2932,6 +2941,25 @@ function osioSanasto(sisalto){
 }
 
 // ---------- Viivakoodin luku ----------
+// Asetuksissa muokattavana oleva koodi. Vain yksi kerrallaan, jotta
+// keskeneraiset muokkaukset eivat jaa roikkumaan pitkalle listalle.
+let muokattavaKoodi = null;
+
+// Koodille tallennettu nimi on aina kayttajan oma valinta. Osaan tuotteista
+// merkki kuuluu nimeen, osaan ei – siksi nimen pitaa olla muokattavissa.
+function tallennaKoodinNimi(koodi){
+  const kentta = document.getElementById('koodiNimiSyote');
+  const nimi = ((kentta && kentta.value) || '').trim().toUpperCase();
+  if (!nimi) return;
+  const vanha = viivakoodit[koodi] || {};
+  viivakoodit[koodi] = { n: nimi, t: Date.now(),
+                         l: nimi === String(vanha.n || '').toUpperCase() ? (vanha.l || 'oma') : 'oma' };
+  tallennaJaettu({ viivakoodit: { [koodi]: viivakoodit[koodi] } });
+  muokattavaKoodi = null;
+  varise(12);
+  piirraAsetukset();
+}
+
 function osioViivakoodi(sisalto){
   const v = osio('📷 Viivakoodin luku');
   const r = rivi();
@@ -2985,13 +3013,40 @@ function osioViivakoodi(sisalto){
   } else {
     koodit.slice(0, 40).forEach(([koodi, tieto]) => {
       const kr = rivi(true);
-      kr.appendChild(kuvaus(String(tieto.n || '').toUpperCase(),
-        koodi + (tieto.l === 'off' ? '  ·  Open Food Facts' : '')));
-      kr.appendChild(nappi('Poista', 'vaara', () => {
-        delete viivakoodit[koodi];
-        tallennaJaettu({ viivakoodit: { [koodi]: deleteField() } });
-        piirraAsetukset();
-      }));
+      if (muokattavaKoodi === koodi){
+        // Muokkaustilassa rivi on pelkka kentta ja kaksi nappia
+        kr.appendChild(kuvaus('Tuotteen nimi', koodi));
+        const syote = document.createElement('div');
+        syote.className = 'rivinSyotteet pinoa';
+        syote.style.flex = '1 1 100%';
+        const kentta = document.createElement('input');
+        kentta.id = 'koodiNimiSyote';
+        kentta.value = String(tieto.n || '').toUpperCase();
+        kentta.placeholder = 'Tuotteen nimi';
+        kentta.onkeydown = (e) => {
+          if (e.key === 'Enter'){ e.preventDefault(); tallennaKoodinNimi(koodi); }
+          if (e.key === 'Escape'){ e.preventDefault(); muokattavaKoodi = null; piirraAsetukset(); }
+        };
+        syote.appendChild(kentta);
+        kr.appendChild(syote);
+        kr.appendChild(nappi('Peruuta', '', () => { muokattavaKoodi = null; piirraAsetukset(); }));
+        kr.appendChild(nappi('Tallenna', 'paa', () => tallennaKoodinNimi(koodi)));
+      } else {
+        kr.appendChild(kuvaus(String(tieto.n || '').toUpperCase(),
+          koodi + (tieto.l === 'off' ? '  ·  Open Food Facts' : '')));
+        kr.appendChild(nappi('Muokkaa', '', () => {
+          muokattavaKoodi = koodi;
+          piirraAsetukset();
+          const kentta = document.getElementById('koodiNimiSyote');
+          if (kentta){ kentta.focus(); kentta.select(); }
+        }));
+        kr.appendChild(nappi('Poista', 'vaara', () => {
+          delete viivakoodit[koodi];
+          if (muokattavaKoodi === koodi) muokattavaKoodi = null;
+          tallennaJaettu({ viivakoodit: { [koodi]: deleteField() } });
+          piirraAsetukset();
+        }));
+      }
       v.appendChild(kr);
     });
     if (koodit.length > 40){
@@ -3191,7 +3246,8 @@ function addNamed(rawName, rawQty){
     }
   }
 
-  list.items.push({ id: rid(), name, qty, done: false, cat });
+  const id = rid();
+  list.items.push({ id, name, qty, done: false, cat });
   recordHistory(name, cat);
 
   const nameEl = document.getElementById('itemName');
@@ -3201,6 +3257,7 @@ function addNamed(rawName, rawQty){
   saveList(currentUser, list);
   render();
   renderSuggestions();
+  return id;
 }
 
 window.addItem = () => {
@@ -3811,14 +3868,19 @@ const offEiLoytynyt = new Set();  // taman istunnon turhat haut
 
 // Nimet ovat tietokannassa epatasaisia: joskus pelkka "Maito", joskus
 // koko pakkausteksti. Merkki eteen vain jos se ei jo ole nimessa.
+// Palauttaa { nimi, merkki }. Merkki kerrotaan erikseen, jotta sen voi
+// pyyhkia yhdella napautuksella: osa tuotteista kaipaa merkin nimeen,
+// osa ei. "VALIO KEVYTMAITO" vs pelkka "KEVYTMAITO".
 function kokoaTuotenimi(t){
   const nimi = String(t.product_name_fi || t.product_name ||
                       t.generic_name_fi || t.generic_name || '').trim();
-  if (!nimi) return '';
-  const merkki = String(t.brands || '').split(',')[0].trim();
-  const kokonaan = (merkki && !nimi.toLowerCase().includes(merkki.toLowerCase()))
-    ? merkki + ' ' + nimi : nimi;
-  return kokonaan.replace(/\s+/g, ' ').trim().slice(0, OFF_NIMEN_MAKSIMI).trim().toUpperCase();
+  if (!nimi) return { nimi: '', merkki: '' };
+  const raakaMerkki = String(t.brands || '').split(',')[0].trim();
+  const merkki = (raakaMerkki && !nimi.toLowerCase().includes(raakaMerkki.toLowerCase()))
+    ? raakaMerkki : '';
+  const siisti = (teksti) => teksti.replace(/\s+/g, ' ').trim()
+    .slice(0, OFF_NIMEN_MAKSIMI).trim().toUpperCase();
+  return { nimi: siisti(merkki ? merkki + ' ' + nimi : nimi), merkki: siisti(merkki) };
 }
 
 async function haeTuotetieto(koodi){
@@ -3839,8 +3901,9 @@ async function haeTuotetieto(koodi){
     if (!vastaus.ok) return '';
     const data = await vastaus.json();
     if (!data || data.status === 0 || !data.product){ offEiLoytynyt.add(koodi); return ''; }
-    const nimi = kokoaTuotenimi(data.product);
-    if (!nimi) offEiLoytynyt.add(koodi);
+    const { nimi, merkki } = kokoaTuotenimi(data.product);
+    if (!nimi){ offEiLoytynyt.add(koodi); return ''; }
+    viimeMerkki = merkki;
     return nimi;
   } catch(e){
     // Aikakatkaisu, katkennut yhteys tai odottamaton vastaus: ei merkita
@@ -3857,6 +3920,9 @@ let skanneriAjastin = null;
 let skanneriTunnistin = null;
 let odottavaKoodi = null;        // koodi joka odottaa nimea
 let viimeEhdotus = '';           // verkosta saatu nimi, jotta lahde tiedetaan
+let viimeMerkki = '';            // ehdotuksen merkkiosa, poistettavissa napista
+let viimeLisatty = null;         // { koodi, itemId } viimeksi skannattu tuote
+let muokkausTila = false;        // nimikysely muokkaa jo tallennettua nimea
 let viimeksiLuettu = { koodi: null, aika: 0 };
 
 const skanneriAuki = () => {
@@ -3887,7 +3953,10 @@ window.avaaSkanneri = async () => {
   pohja.classList.add('auki');
   document.getElementById('skanneriNimiRivi').style.display = 'none';
   odottavaKoodi = null;
+  muokkausTila = false;
+  viimeEhdotus = ''; viimeMerkki = ''; viimeLisatty = null;
   viimeksiLuettu = { koodi: null, aika: 0 };
+  paivitaSkanneriNapit();
   try { history.pushState({ v: 'skanneri' }, ''); } catch(e){}
 
   if (!skanneriTuettu()){
@@ -3957,14 +4026,19 @@ async function kasitteleKoodi(koodi){
   //    juuri ne nimet jotka olet itse hyväksynyt.
   const tieto = viivakoodit[koodi];
   if (tieto && tieto.n){
-    addNamed(tieto.n, '1');
-    skanneriViesti('Lisätty listalle: <b>' + htmlTurva(tieto.n) + '</b>');
+    const itemId = addNamed(tieto.n, '1');
+    viimeLisatty = itemId ? { koodi, itemId } : null;
+    skanneriViesti('Lisätty listalle: <b>' + htmlTurva(tieto.n) + '</b>' +
+                   '<br>Väärä nimi? Muokkaa se – koodi muistaa uuden nimen jatkossa.');
+    paivitaSkanneriNapit();
     return lueSilmukka();
   }
 
   // odottavaKoodi pysäyttää lukusilmukan haun ajaksi
   odottavaKoodi = koodi;
   viimeEhdotus = '';
+  viimeMerkki = '';
+  muokkausTila = false;
 
   // 2) Tuntematon koodi tarkistetaan verkosta, jos haku on päällä.
   if (ulkoasu.verkkohaku && navigator.onLine && /^\d{6,14}$/.test(koodi)){
@@ -3982,32 +4056,122 @@ async function kasitteleKoodi(koodi){
 // 3) Nimi kysytään aina: haku tuottaa ehdotuksen, ei valmista lisäystä.
 function kysyNimi(koodi, ehdotus){
   document.getElementById('skanneriNimiRivi').style.display = 'flex';
-  skanneriViesti(ehdotus
-    ? 'Open Food Facts: <b>' + htmlTurva(ehdotus) + '</b><br>Tarkista nimi ja tallenna.'
-    : 'Tuntematon koodi <span class="koodiRivi">' + htmlTurva(koodi) +
-      '</span><br>Anna tuotteen nimi, niin se muistetaan jatkossa.');
+  skanneriViesti(muokkausTila
+    ? 'Muokataan nimeä <span class="koodiRivi">' + htmlTurva(koodi) +
+      '</span><br>Uusi nimi tallentuu koodille ja korvaa juuri lisätyn tuotteen.'
+    : ehdotus
+      ? 'Open Food Facts: <b>' + htmlTurva(ehdotus) + '</b><br>Tarkista nimi ja tallenna.'
+      : 'Tuntematon koodi <span class="koodiRivi">' + htmlTurva(koodi) +
+        '</span><br>Anna tuotteen nimi, niin se muistetaan jatkossa.');
   const kentta = document.getElementById('skanneriNimi');
   kentta.value = ehdotus;
   kentta.focus();
   // Ehdotus valmiiksi maalattuna: kirjoittaminen korvaa sen suoraan
   if (ehdotus) kentta.select();
+  paivitaSkanneriNapit();
+}
+
+// Napit nakyvat vain kun niille on kaytto: turha nappi vie tilaa kameralta.
+function paivitaSkanneriNapit(){
+  const nimiAuki = document.getElementById('skanneriNimiRivi').style.display === 'flex';
+  const kentta = document.getElementById('skanneriNimi');
+  const merkkiNakyy = nimiAuki && !!viimeMerkki &&
+    kentta.value.toUpperCase().startsWith(viimeMerkki + ' ');
+  const muokkaaNakyy = !nimiAuki && !!viimeLisatty && !!viivakoodit[viimeLisatty.koodi];
+  const peruNakyy = nimiAuki;
+
+  document.getElementById('skanneriIlmanMerkkia').style.display = merkkiNakyy ? '' : 'none';
+  document.getElementById('skanneriMuokkaa').style.display = muokkaaNakyy ? '' : 'none';
+  document.getElementById('skanneriPeru').style.display = peruNakyy ? '' : 'none';
+  document.getElementById('skanneriToiminnot').style.display =
+    (merkkiNakyy || muokkaaNakyy || peruNakyy) ? 'flex' : 'none';
+}
+
+// Osa tuotteista kaipaa merkin nimeen, osa ei. Yksi napautus pyyhkii sen.
+window.poistaMerkkiNimesta = () => {
+  const kentta = document.getElementById('skanneriNimi');
+  if (!viimeMerkki) return;
+  kentta.value = kentta.value.slice(viimeMerkki.length).trim();
+  viimeEhdotus = '';           // nimi on nyt oma, ei enää verkosta saatu
+  kentta.focus();
+  paivitaSkanneriNapit();
+};
+
+// Juuri skannatun tuotteen nimen korjaus. Uusi nimi tallentuu koodille ja
+// korvaa listalle jo lisatyn rivin, jottei listalle jaa vaaraa nimea.
+window.muokkaaViimeisinta = () => {
+  if (!viimeLisatty) return;
+  const tieto = viivakoodit[viimeLisatty.koodi];
+  if (!tieto) return;
+  odottavaKoodi = viimeLisatty.koodi;
+  muokkausTila = true;
+  viimeEhdotus = '';
+  viimeMerkki = '';
+  clearTimeout(skanneriAjastin); skanneriAjastin = null;
+  kysyNimi(viimeLisatty.koodi, tieto.n || '');
+};
+
+// Peruutus palauttaa lukutilaan lisaamatta tai muuttamatta mitaan.
+window.peruNimiKysely = () => {
+  odottavaKoodi = null;
+  muokkausTila = false;
+  viimeEhdotus = '';
+  viimeMerkki = '';
+  document.getElementById('skanneriNimi').value = '';
+  document.getElementById('skanneriNimiRivi').style.display = 'none';
+  skanneriViesti('Kohdista viivakoodi ruudun keskelle');
+  paivitaSkanneriNapit();
+  lueSilmukka();
+};
+
+// Nimen vaihto vaikuttaa myos arvattuun osastoon ja ostoshistoriaan,
+// samoin kuin nimen muokkaus tuoterivilla.
+function nimeaTuoteUudelleen(itemId, uusiNimi){
+  const list = findList(getActive());
+  if (!list) return false;
+  const it = list.items.find(i => i.id === itemId);
+  if (!it) return false;
+  const vanha = it.name;
+  if (normName(vanha) !== normName(uusiNimi)){
+    forgetHistory(vanha);
+    recordHistory(uusiNimi, guessCategory(uusiNimi));
+  }
+  it.name = uusiNimi;
+  it.cat = guessCategory(uusiNimi);
+  saveList(currentUser, list);
+  render();
+  return true;
 }
 
 window.tallennaSkannattu = () => {
   const kentta = document.getElementById('skanneriNimi');
   const nimi = (kentta.value || '').trim().toUpperCase();
   if (!nimi || !odottavaKoodi) return;
+  const koodi = odottavaKoodi;
 
-  viivakoodit[odottavaKoodi] = { n: nimi, t: Date.now(),
-                                 l: (nimi === viimeEhdotus && nimi) ? 'off' : 'oma' };
-  tallennaJaettu({ viivakoodit: { [odottavaKoodi]: viivakoodit[odottavaKoodi] } });
-  addNamed(nimi, '1');
-  skanneriViesti('Lisätty listalle: <b>' + htmlTurva(nimi) + '</b>');
+  // Nimi tallentuu aina koodille: seuraavalla kerralla se tunnistuu heti.
+  // Verkosta saatu nimi merkitaan omaksi heti kun sita on muokattu.
+  viivakoodit[koodi] = { n: nimi, t: Date.now(),
+                         l: (nimi === viimeEhdotus && nimi) ? 'off' : 'oma' };
+  tallennaJaettu({ viivakoodit: { [koodi]: viivakoodit[koodi] } });
+
+  if (muokkausTila && viimeLisatty && viimeLisatty.koodi === koodi &&
+      nimeaTuoteUudelleen(viimeLisatty.itemId, nimi)){
+    skanneriViesti('Nimi päivitetty: <b>' + htmlTurva(nimi) + '</b>' +
+                   '<br>Koodi muistaa tämän nimen jatkossa.');
+  } else {
+    const itemId = addNamed(nimi, '1');
+    viimeLisatty = itemId ? { koodi, itemId } : null;
+    skanneriViesti('Lisätty listalle: <b>' + htmlTurva(nimi) + '</b>');
+  }
 
   odottavaKoodi = null;
+  muokkausTila = false;
   viimeEhdotus = '';
+  viimeMerkki = '';
   kentta.value = '';
   document.getElementById('skanneriNimiRivi').style.display = 'none';
+  paivitaSkanneriNapit();
   lueSilmukka();
 };
 
@@ -4019,7 +4183,8 @@ window.suljeSkanneri = (takaaPain) => {
   clearTimeout(skanneriAjastin); skanneriAjastin = null;
   if (offPyynto){ try { offPyynto.abort(); } catch(e){} offPyynto = null; }
   odottavaKoodi = null;
-  viimeEhdotus = '';
+  muokkausTila = false;
+  viimeEhdotus = ''; viimeMerkki = ''; viimeLisatty = null;
   if (skanneriVirta){
     try { skanneriVirta.getTracks().forEach(t => t.stop()); } catch(e){}
     skanneriVirta = null;
@@ -4028,6 +4193,7 @@ window.suljeSkanneri = (takaaPain) => {
   if (video) video.srcObject = null;
   pohja.classList.remove('auki');
   document.getElementById('skanneriNimiRivi').style.display = 'none';
+  document.getElementById('skanneriToiminnot').style.display = 'none';
   skanneriViesti('');
   if (!takaaPain){
     try {
@@ -4067,10 +4233,13 @@ function wireInputs(){
   });
   // Skannerin nimikentässä näppäimistön rivinvaihto tallentaa, jotta
   // koodin lukemisesta listalle pääsee ilman että kenttää etsii sormella.
-  document.getElementById('skanneriNimi').addEventListener('keydown', (e) => {
+  const skanNimi = document.getElementById('skanneriNimi');
+  skanNimi.addEventListener('keydown', (e) => {
     if (e.key === 'Enter'){ e.preventDefault(); window.tallennaSkannattu(); }
-    if (e.key === 'Escape'){ e.preventDefault(); window.suljeSkanneri(); }
+    if (e.key === 'Escape'){ e.preventDefault(); window.peruNimiKysely(); }
   });
+  // Merkinpoistonappi katoaa heti kun merkki ei enää ole nimen alussa
+  skanNimi.addEventListener('input', paivitaSkanneriNapit);
 }
 
 // ============================
