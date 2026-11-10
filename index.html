@@ -763,12 +763,42 @@ body[data-teema="musta"] .skanneriPohja{background:#000;}
   *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
 }
 
+/* ---------- Kirjautuminen ---------- */
+#kirjautuminen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:#0a0a0f;}
+#kirjautuminen[hidden]{display:none;}
+.kirjKortti{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;padding:28px 24px;
+  border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.kirjLogo{font-size:44px;text-align:center;}
+.kirjKortti h1{text-align:center;font-size:26px;font-weight:800;
+  background:linear-gradient(90deg,#ff9830,#ffb347);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.kirjOhje{text-align:center;font-size:14px;color:rgba(255,255,255,0.65);line-height:1.45;}
+.kirjKortti label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);}
+.kirjKortti input{font:inherit;font-size:16px;padding:13px 14px;border-radius:12px;color:#fff;
+  background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.15);outline:none;}
+.kirjKortti input:focus{border-color:#ff9830;}
+#kirjVirhe{min-height:18px;font-size:14px;color:#ff8a8a;text-align:center;}
+#kirjNappi{padding:14px;font-size:16px;font-weight:700;border-radius:14px;}
 </style>
 <link rel="manifest" href="/kauppalista/manifest.json">
 <meta name="theme-color" content="#ff9830">
 <link rel="apple-touch-icon" href="/kauppalista/icons/icon-192.png">
 </head>
 <body>
+
+<!-- Kirjautuminen: näkyy vain, jos tässä puhelimessa ei ole vielä kirjauduttu -->
+<div id="kirjautuminen" hidden>
+  <form class="kirjKortti" onsubmit="kirjaudu(event)">
+    <div class="kirjLogo">🛒</div>
+    <h1>Kauppalista</h1>
+    <p class="kirjOhje">Kirjaudu kerran tällä puhelimella. Sen jälkeen sovellus muistaa kirjautumisen.</p>
+    <label>Sähköposti<input id="kirjEmail" type="email" autocomplete="username" inputmode="email"></label>
+    <label>Salasana<input id="kirjSalasana" type="password" autocomplete="current-password"></label>
+    <div id="kirjVirhe" role="alert"></div>
+    <button id="kirjNappi" type="submit">Kirjaudu</button>
+  </form>
+</div>
 
 <div id="saveStatus"></div>
 
@@ -889,6 +919,7 @@ import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
   doc, collection, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDswdEF9J0gsHJH6Zo_8BGZrf8DVG3FwYc",
@@ -900,6 +931,9 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+// Kirjautuminen: kauppalistaan pääsee vain kirjautuneena. Kirjautuminen kysytään kerran
+// kussakin puhelimessa, ja Firebase muistaa sen sen jälkeen (myös ilman verkkoa).
+const auth = getAuth(app);
 
 // Firestoren oma offline-varasto (IndexedDB): kirjoitukset tallentuvat
 // puhelimeen heti ja jonottuvat itsestään kunnes verkko palaa.
@@ -944,6 +978,12 @@ let vtTarget = null;   // ainoa rivi jolle annetaan view-transition-name
 
 const rid = () => Math.random().toString(36).slice(2, 11);
 const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+// Tekstin suojaus: tietokannasta tuleva teksti (käyttäjät, osastot, opitut sanat) muutetaan
+// merkeiksi ennen kuin se liitetään sivulle HTML:nä. Näin mikään tallennettu teksti ei voi ajaa koodia.
+function turva(t){
+  return String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 function readJSON(key, fallback){
   try { const raw = localStorage.getItem(key); return raw ? (JSON.parse(raw) ?? fallback) : fallback; }
@@ -1748,7 +1788,7 @@ function renderSuggestions(){
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'chip';
-    b.innerHTML = `<span class="chipIcon">${CAT_BY_ID[cat].icon}</span>${r.name.toUpperCase()}`;
+    b.innerHTML = `<span class="chipIcon">${turva(CAT_BY_ID[cat].icon)}</span>${turva(String(r.name).toUpperCase())}`;
     b.title = 'Lisää listalle';
     // pointerdown ennen blur-tapahtumaa, jotta napautus ehtii rekisteröityä
     b.addEventListener('pointerdown', (e) => {
@@ -2194,7 +2234,7 @@ function updateUserButtons(){
     btn.onclick = () => window.switchUser(k.id);
     const maara = ((states[k.id] || {}).lists || [])
       .reduce((s2, l) => s2 + (l.items || []).filter(i => !i.done).length, 0);
-    btn.innerHTML = k.emoji + ' ' + k.nimi +
+    btn.innerHTML = turva(k.emoji) + ' ' + turva(k.nimi) +
       (maara > 0 ? `<span class="user-badge">${maara}</span>` : '');
     sw.appendChild(btn);
   });
@@ -2202,11 +2242,11 @@ function updateUserButtons(){
 
 
 // ============================================================
-//  ASETUKSET (PIN 3661)
+//  ASETUKSET (PIN 1234)
 //  Muutokset tallentuvat jaettuun dokumenttiin, joten ne näkyvät
 //  molemmille käyttäjille. PIN estää vain vahingossa säätämisen.
 // ============================================================
-const PIN = '3661';
+const PIN = '1234';
 
 // ============================================================
 //  VERSIO
@@ -2214,7 +2254,7 @@ const PIN = '3661';
 //  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
 //  pyorii eri versio kuin luulet.
 // ============================================================
-const SOVELLUS_VERSIO = '5.5.0';
+const SOVELLUS_VERSIO = '5.6.0';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
@@ -2587,7 +2627,7 @@ function piirraVersioKortti(sisalto){
 function osio(otsikko){
   const d = document.createElement('div');
   d.className = 'asetusKortti';
-  d.innerHTML = `<div class="asetusOtsikko">${otsikko}</div>`;
+  d.innerHTML = `<div class="asetusOtsikko">${turva(otsikko)}</div>`;
   return d;
 }
 function rivi(pysty){
@@ -2867,7 +2907,7 @@ function osioSanasto(sisalto){
       sel.style.flex = '0 0 auto'; sel.style.maxWidth = '150px';
       sel.innerHTML = `<option value=''>Valitse…</option>` +
         CATEGORIES.filter(c => c.id !== 'muu')
-          .map(c => `<option value='${c.id}'>${c.icon} ${c.name}</option>`).join('');
+          .map(c => `<option value='${turva(c.id)}'>${turva(c.icon)} ${turva(c.name)}</option>`).join('');
       sel.onchange = () => {
         if (!sel.value) return;
         learnCategory(tieto.n || avain, sel.value);
@@ -2898,7 +2938,7 @@ function osioSanasto(sisalto){
   skSel.style.flex = '1 1 100%';
   skSel.style.minWidth = '0';
   skSel.innerHTML = CATEGORIES.filter(c => c.id !== 'muu')
-    .map(c => `<option value='${c.id}'>${c.icon} ${c.name}</option>`).join('');
+    .map(c => `<option value='${turva(c.id)}'>${turva(c.icon)} ${turva(c.name)}</option>`).join('');
   skSyote.appendChild(skSel);
   sk.appendChild(skSyote);
   const skRivi = rivi();
@@ -3705,8 +3745,8 @@ function buildItemRow(it){
 function catHeader(icon, text, count, vari){
   const h = document.createElement('div');
   h.className = 'catHeader';
-  h.innerHTML = `<span class="catIcon">${icon}</span><span>${text}</span>` +
-                `<span class="catLine"></span><span class="catCount">${count}</span>`;
+  h.innerHTML = `<span class="catIcon">${turva(icon)}</span><span>${turva(text)}</span>` +
+                `<span class="catLine"></span><span class="catCount">${turva(count)}</span>`;
   if (vari && ulkoasu.variotsikot){
     h.style.color = vari;
     h.querySelector('.catLine').style.background =
@@ -4281,7 +4321,44 @@ async function init(){
   refreshStatus();
 }
 
-init();
+// Sovellus käynnistyy vasta, kun kirjautuminen on varmistettu.
+let kaynnistetty = false;
+onAuthStateChanged(auth, (user) => {
+  const ruutu = document.getElementById('kirjautuminen');
+  if (user){
+    ruutu.hidden = true;
+    if (!kaynnistetty){ kaynnistetty = true; init(); }
+  } else {
+    // Uloskirjautuminen kesken käytön (esim. toisessa saman osoitteen sovelluksessa):
+    // aloitetaan puhtaalta pöydältä, kun kirjaudutaan uudelleen.
+    if (kaynnistetty){ location.reload(); return; }
+    ruutu.hidden = false;
+    document.getElementById('kirjEmail').focus();
+  }
+});
+
+window.kirjaudu = async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('kirjEmail').value.trim();
+  const salasana = document.getElementById('kirjSalasana').value;
+  const virhe = document.getElementById('kirjVirhe');
+  const nappi = document.getElementById('kirjNappi');
+  virhe.textContent = '';
+  if (!email || !salasana){ virhe.textContent = 'Täytä sähköposti ja salasana.'; return; }
+  nappi.disabled = true; nappi.textContent = 'Kirjaudutaan…';
+  try {
+    await signInWithEmailAndPassword(auth, email, salasana);
+  } catch (err){
+    const k = err && err.code;
+    virhe.textContent =
+      (k === 'auth/invalid-credential' || k === 'auth/wrong-password' || k === 'auth/user-not-found' || k === 'auth/invalid-email')
+        ? 'Väärä sähköposti tai salasana.'
+      : k === 'auth/too-many-requests' ? 'Liian monta yritystä. Yritä hetken päästä uudelleen.'
+      : k === 'auth/network-request-failed' ? 'Ei verkkoyhteyttä. Ensimmäinen kirjautuminen vaatii netin.'
+      : 'Kirjautuminen ei onnistunut. Yritä uudelleen.';
+    nappi.disabled = false; nappi.textContent = 'Kirjaudu';
+  }
+};
 
 </script>
 
