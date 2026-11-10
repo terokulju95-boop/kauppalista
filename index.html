@@ -2254,7 +2254,7 @@ const PIN = '1234';
 //  vertaa naita ja huomauttaa jos ne eroavat – silloin puhelimessa
 //  pyorii eri versio kuin luulet.
 // ============================================================
-const SOVELLUS_VERSIO = '5.6.0';
+const SOVELLUS_VERSIO = '5.6.1';
 const PIN_MUISTI = 'kauppalista_pin_ok';
 let pinAvattu = false;
 try { pinAvattu = localStorage.getItem(PIN_MUISTI) === '1'; } catch(e){}
@@ -2571,10 +2571,12 @@ function piirraKehitysOsio(sisalto){
                      'Listat säilyvät. Sovellus haetaan kokonaan uudelleen verkosta.')) return;
         showStatus('Tyhjennetään…', '#f97316', true);
         try {
-          const nimet = await caches.keys();
+          // Vain kauppalistan omat: samassa osoitteessa on muitakin sovelluksia
+          // (esim. Capitalsin ilmoitukset katoaisivat, jos sen service worker poistettaisiin).
+          const nimet = (await caches.keys()).filter(n => n.startsWith('kauppalista-'));
           await Promise.all(nimet.map(n => caches.delete(n)));
-          const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(r => r.unregister()));
+          const oma = await navigator.serviceWorker.getRegistration();
+          if (oma) await oma.unregister();
         } catch(e){ console.error('Välimuistin tyhjennys epäonnistui', e); }
         location.reload();
       });
